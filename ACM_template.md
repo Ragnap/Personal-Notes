@@ -46,6 +46,22 @@ int main() {
 }
 ```
 
+## 常用命令
+
+### 关闭流同步加速cin
+
+```c++
+std::ios::sync_with_stdio(false);
+```
+
+### 手动扩栈
+
+```c++
+#pragma comment(linker, "/STACK:10240000,10240000")
+```
+
+
+
 # STL
 
 ## 数组 / vector
@@ -70,7 +86,7 @@ while(next_permutation(v.begin(),v.end()){ ... }//遍历全排列
 
 ### upper_bound( ) & lower_bound()
 
-  $ O(log\ n)$  二分第一个 $ \geq x $(lower) 或者   $ > x $ (upper)  的地址，在不存在对应值时都为右端点
+  $ O(log\ n)$  二分第一个 $ \geq x $(lower) 或者   $ < x $ (upper)  的地址，在不存在对应值时都为右端点
 ```c++
 int pre=a[upper_bound(a,a+n,x)-a];//启，止，值
 ```
@@ -108,7 +124,7 @@ $O(log\ n) $  返回以 $ key $ 排序的 upper_bound 和 lower_bound，在不�
 ## 手动扩栈
 
 ```c++
-#pragma comment(linker, "/STACK:10240000,10240000")
+
 ```
 
 ## 无负数
@@ -1402,34 +1418,97 @@ int Manacher(string s) {
 
 ### $0 1$ 背包
 
-$dp[j]=\max(dp[j],\ dp[j-c[i]]+v[i])$ , 其中 $dp[i]$ 表示背包容量为 $i$ 时能取到的最大价值
+$dp[j]=\max(dp[j],\ dp[j-w[i]]+v[i])$ , 其中 $dp[i]$ 表示背包容量为 $i$ 时能取到的最大价值
 
 ```c++
 for(int i = 0; i < n; i++) {
-    for(int j = m; j >= c[i]; j--) {
-        dp[j] = _max(dp[j], dp[j - c[i]] + v[i]);
+    for(int j = W; j >= c[i]; j--) {
+        dp[j] = _max(dp[j], dp[j - w[i]] + v[i]);
     }
 }
 ```
 
 ### 完全背包 / 多重背包
 
-$dp[j]=\max(dp[j],\ dp[j-c[i]*k]+v[i]*k)$ , 其中 $dp[j]$ 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
+$dp[j]=\max(dp[j],\ dp[j-w[i]*k]+v[i]*k)$ , 其中 $dp[j]$ 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
 
 ```c++
 for(int i = 0; i < n; i++) {
-    int have = m; //物品i的总数量
+    int have = num[i]; //物品i的总数量
     for(int k = 1; have; k <<= 1) {
         k = _min(have, k);
-        for(int j = m; j >= c[i] * k; j--) {
-            dp[j] = _max(dp[j], dp[j - c[i] * k] + v[i] * k);
+        for(int j = W; j >= c[i] * k; j--) {
+            dp[j] = _max(dp[j], dp[j - w[i] * k] + v[i] * k);
         }
         have -= k;
     }
 }
 ```
 
+### 低价背包
 
+$W$ 很大但 $\sum v$ 很小时可以用价值作为进行转移的变量，下面给出01背包对应做法:
+
+$dp[j]=\min(dp[j],\ dp[j-v[i]]+w[i])$ , 其中 $dp[i]$ 表示当取得价值为 $i$ 时背包的最小容量
+
+```c++
+dp[0] = 0;
+for(int i = 1; i < MX; i++)
+    dp[i] = ll_INF;
+for(int i = 0; i < n; i++) {
+    for(int j = MX - 1; j >= v[i]; j--) {//mx为总价值
+        dp[j] = _min(dp[j], dp[j - v[i]] + w[i]);
+    }
+}
+for(int i = MX - 1; i >= 0; i--) {
+    if(dp[i] <= m) {
+        ans=i;
+        break;
+    }
+}
+```
+
+### 巨大背包
+
+$n \leq 40$ 但是 $W$ 和  $\sum v$  都很大时，可以使用分治的思想将其分为两部分，将问题转换为在前半找到总质量为 $w_1$ 和总价值为 $v_1$ 的部分, 在后半找到总质量为 $w_2$ 和总价值为 $v_2$ 的部分，使在$w_1 +w_2 \leq W$  条件下满足 $v_1+v_2$ 最大。核心做法其实是二分。
+
+```c++
+pil pre[2000010];
+void huge_bag() {
+    int len = n >> 1, cnt = 1;
+    for(int i = 0; i < (1 << len); i++) {
+        ll sumv = 0, sumw = 0;
+        for(int j = 0; j < len; j++) {
+            if(i & (1 << j)) {
+                sumv += v[j], sumw += w[j];
+            }
+        }
+        pre[i] = make_pair(sumw, sumv);  //注意是(w,v)
+    }
+    sort(pre, pre + (1 << len));
+    for(int i = 1; i < (1 << len); i++)
+        if(pre[cnt - 1].second < pre[i].second)
+            pre[cnt++] = pre[i];
+    ll ans = 0;
+    for(int i = 0; i < (1 << (n - len)); i++) {
+        ll sumv = 0, sumw = 0;
+        for(int j = 0; j < n - len; j++) {
+            if(i & (1 << j)) {
+                sumv += v[len + j], sumw += w[len + j];
+            }
+        }
+        if(sumw <= W) {
+            ll id = lower_bound(pre, pre + cnt, make_pair(W - sumw, ll_INF)) - pre;
+            ans = _max(ans, sumv + pre[id - 1].second);
+        }
+    }
+    cout << ans << endl;
+}
+```
+
+### 常见优化
+
+当费用相同时，只需保留价值最高的；当价值一定时，只需保留费用最低的；更一般的，对于两件物品 $i,j$ ，若$v_i \geq v_j$ 且  $w_i \leq w_j$ ，只需保留物品 $i$ 。
 
 # 图论
 
