@@ -37,7 +37,7 @@ int main() {
     freopen("data.in", "r", stdin);
     freopen("data.out", "w", stdout);
 #endif
-    int t = _r();
+    int t = 1;
     while (t--) {
         Init();
         solve();
@@ -850,7 +850,7 @@ ll _mul(ll x, ll y, ll MOD) {
 另一种用于处理爆出 ll 的方法
 
 ```c++
-ll _mul(ll x, ll y) {
+ll _mul(ll a, ll b) {
 	a %= MOD, b %= MOD;
 	return (a * b - (ll)(((long double)a * b + 0.5) / MOD) * MOD) % MOD;
 }
@@ -1147,6 +1147,12 @@ struct Vector2 {
 		c.y = x - b.y;
 		return c;
 	}
+    Vector2 rotate (const double& theta)const{
+        Vector2 c;
+        c.x = x * cos(theta) - y * sin(theta);
+        c.y = y * cos(theta) + x * sin(theta);
+        return c;
+    }
 	friend T dot(const Vector2& a, const Vector2& b) {//点乘
 		return a.x * b.x + a.y * b.y;
 	}
@@ -1182,6 +1188,54 @@ double get_S() {
 ```
 
 ## 角度
+
+### 旋转
+
+计算 $\vec{v}=(x,y)$ 绕原点（起点）逆时针旋转 $\theta$ 后的向量
+
+```c++
+Vector2 rotate(Vector2& a, const double& theta) {
+    Vector2 c;
+    c.x = a.x * cos(theta) - a.y * sin(theta);
+    c.y = a.y * cos(theta) + a.x * sin(theta);
+    return c;
+}
+```
+
+### 极角排序
+
+逆时针排序向量或点，其中弧度比较常数较小，叉积比较精度较高
+
+#### 极角
+
+计算 $\vec{v}=(x,y)$ 顺时针到 $x$ 轴正半轴方向转过的角度 $\theta -\pi$，值域为 $(-\pi,\pi\ ]$ 
+
+```c++
+double theta = atan2(x, y);
+```
+
+#### 弧度比较法
+
+```c++
+bool cmp(const Point& p1, const Point& p2) {
+    return atan2(p1.y, p1.x) < atan2(p2.y, p2.x);
+}
+```
+
+#### 叉积比较法
+
+```c++
+int quad(const Point& p) {  //求象限
+    return ((p.y < 0) ? 1 : 3) + ((p.x < 0) ^ (p.y < 0));
+}
+bool cmp(const Point& p1, const Point& p2) {
+    if(quad(p1) != quad(p2))
+        return quad(p1) < quad(p2);
+    if(corss(p1, p2) != 0)
+        return corss(p1, p2) > 0;
+    return p1.x < p2.x;
+}
+```
 
 
 
@@ -1342,6 +1396,41 @@ int Manacher(string s) {
 	return max_len;
 }
 ```
+# DP
+
+## 背包问题
+
+### $0 1$ 背包
+
+$dp[j]=\max(dp[j],\ dp[j-c[i]]+v[i])$ , 其中 $dp[i]$ 表示背包容量为 $i$ 时能取到的最大价值
+
+```c++
+for(int i = 0; i < n; i++) {
+    for(int j = m; j >= c[i]; j--) {
+        dp[j] = _max(dp[j], dp[j - c[i]] + v[i]);
+    }
+}
+```
+
+### 完全背包 / 多重背包
+
+$dp[j]=\max(dp[j],\ dp[j-c[i]*k]+v[i]*k)$ , 其中 $dp[j]$ 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
+
+```c++
+for(int i = 0; i < n; i++) {
+    int have = m; //物品i的总数量
+    for(int k = 1; have; k <<= 1) {
+        k = _min(have, k);
+        for(int j = m; j >= c[i] * k; j--) {
+            dp[j] = _max(dp[j], dp[j - c[i] * k] + v[i] * k);
+        }
+        have -= k;
+    }
+}
+```
+
+
+
 # 图论
 
 ## 基本框架
