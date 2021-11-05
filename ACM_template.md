@@ -1445,9 +1445,9 @@ for(int i = 0; i < n; i++) {
 }
 ```
 
-### 低价背包
+### 超重 $01$ 背包
 
-$W$ 很大但 $\sum v$ 很小时可以用价值作为进行转移的变量，下面给出01背包对应做法:
+$w_i$ 很大但 $\sum v_i$ 很小时可以用价值作为进行转移的变量，下面给出01背包对应做法:
 
 $dp[j]=\min(dp[j],\ dp[j-v[i]]+w[i])$ , 其中 $dp[i]$ 表示当取得价值为 $i$ 时背包的最小容量
 
@@ -1465,6 +1465,47 @@ for(int i = MX - 1; i >= 0; i--) {
         ans=i;
         break;
     }
+}
+```
+
+### 超重完全背包
+
+终极版完全背包：$W$， $w_i$ ，$num_i$ 很大但 $\sum v_i$ , $n$ 很小时的背包，可以先以性价比贪心，选取一定量的最高性价比后将 $W$ 降至一个可接受的大小再进行 DP。可接受的范围其实是需要保证在这个范围内每个物品都有可能被取到，也就是 $n*\sum v_i$  。具体的实现过程是倒过来的，现在全物品范围内跑一次完全背包，再利用贪心将背包的剩余部分填充满。
+
+```c++
+bool cmp(int a, int b) {
+    return v[a] * w[b] > v[b] * w[a];
+}
+void huge_bag() {
+    int lim = 50 * 50 * 50 + 1;
+    for(int i = 1; i <= lim; i++)
+        dp[i] = ll_INF;
+    for(int i = 0; i < n; i++) { //小范围DP
+        ll have = _min(num[i], 50);
+        num[i] -= have;
+        for(ll k = 1; have; k <<= 1) {
+            k = _min(have, k);
+            for(int j = lim - 1; j >= v[i] * k; j--) {
+                dp[j] = _min(dp[j], dp[j - v[i] * k] + w[i] * k);
+            }
+            have -= k;
+        }
+    }
+    for(int i = 1; i < n; i++) id[i] = i;
+    sort(id, id + n, cmp);//性价比排序
+    ll ans = 0;
+    for(int j = 0; j <= lim; j++) {// 贪心
+        ll rest = W - dp[j], now = j;
+        if(rest < 0)
+            continue;
+        for(int i = 0; i < n; i++) {
+            ll div = _min(num[id[i]], rest / w[id[i]]);
+            rest -= div * w[id[i]];
+            now += div * v[id[i]];
+        }
+        ans = _max(ans, now);
+    }
+    cout << ans << endl;
 }
 ```
 
@@ -1505,6 +1546,8 @@ void huge_bag() {
     cout << ans << endl;
 }
 ```
+
+
 
 ### 常见优化
 
