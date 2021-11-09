@@ -1286,7 +1286,7 @@ ull hash(string x) {
 }
 ```
 
-## FNV哈希
+### FNV哈希
 
 $$
 & int: & res=  2166136261           &, &FNV\_prime=  16777619      &;\\
@@ -1578,9 +1578,10 @@ void addedge(int u, int v, ll val) {
 
 ```c++
 priority_queue<pil, vector<pil>, greater<pil> > q;
-int vis[MX] = { 0 };
+int vis[MX] = { 0 }; ll dis[MX] = { 0 };
 void dijkstra(int s) {
 	q.push(make_pair(0, s));
+    for(int i=0;i<=n;i++)dis[i]=ll_INF;
 	dis[s] = 0;
 	int u;
 	while (!q.empty()) {
@@ -1606,6 +1607,7 @@ int inq[MX]; ll dis[MX] = { 0 };
 void SPFA(int s) {
     while (!q.empty())q.pop_back();
 	q.push(s);
+    for(int i=0;i<=n;i++)dis[i] = ll_INF;
 	dis[s] = 0;
 	while (!q.empty()) {
 		int u = q.front(); q.pop();
@@ -1630,11 +1632,13 @@ void SPFA(int s) {
 deque<int> q;
 int inq[MX], len[MX]; ll dis[MX] = { 0 };
 int spfa_SLF(int u) {
-	while (!q.empty())q.pop_back();
+    while (!q.empty())q.pop_back();
 	q.push_back(u);
+    for(int i=0;i<=n;i++)dis[i] = ll_INF;
+    dis[u]=0;
 	while (!q.empty()) {
 		u = q.front(); q.pop_front();
-		inq[u] = 0;
+		len[u] = dis[u] = 0;
 		for (int i = head[u]; i; i = e[i]._next) {
 			int v = e[i].v;
 			if (dis[v] > dis[u] + e[i].val) {
@@ -1642,7 +1646,7 @@ int spfa_SLF(int u) {
 				//判定负环（不保证出现时用 e.g.差分约束）
 				len[v] = len[u] + 1;
 				if (len[v] > n) {
-					flag = 1;
+					//flag = 1;
 					return 1;
 				}
 				if (!inq[v]) {
@@ -1717,8 +1721,6 @@ void floyd() {
 ```
 
 ### K短路(A*)
-
-
 
 ```c++
 struct Ori {
@@ -1882,11 +1884,11 @@ void tarjan(int u) {
 
 ### 割点与桥
 
-注意都是**无向图**概念
+注意都是**无向图**概念，在判定桥时**边计数器请从1开始**
 
 ```c++
 int dfn[MX], low[MX], DFS_clock = 0;
-int is_cut[MX], birdge[MX];
+int is_cut[MX], bridge[MX << 1];
 void tarjan(int u, int fa, int root) {
 	dfn[u] = low[u] = ++DFS_clock;
 	int now_size = 0;
@@ -1897,9 +1899,8 @@ void tarjan(int u, int fa, int root) {
 			low[u] = _min(low[u], low[v]);
 			if (low[v] >= dfn[u]) {//割点的判定
 				now_size++;
-				if (u != root || now_size > 1) {
+				if (u != root || now_size > 1)
 					is_cut[u] = 1;
-				}
 			}
 			if (low[v] > dfn[u])//桥的判定
 				bridge[i] = bridge[i ^ 1] = 1;
@@ -1966,6 +1967,8 @@ void _union(int x, int y) {
 
 ### 最小生成树
 
+无向图概念
+
 ```c++
 bool cmp(Node a, Node b) {
 	return a.val < b.val;
@@ -1988,6 +1991,67 @@ ll kruskal() {
 	return -1;
 }
 ```
+
+### 最小树形图
+
+有向图的最小生成树
+
+```c++
+ll in_val[MX] = {0};
+int in_u[MX] = {0}, loop_id[MX] = {0}, fa[MX] = {0}, root;//为给定时需要遍历root
+ll zhuliu() {
+    ll DMST = 0;
+    int num = n;
+    while(1) {
+        for(int i = 1; i <= num; i++)
+            in_val[i] = ll_INF;
+        for(int i = 1; i <= m; i++) {
+            if(e[i].u != e[i].v && in_val[e[i].v] > e[i].val) {
+                in_val[e[i].v] = e[i].val;
+                in_u[e[i].v] = e[i].u;
+            }
+        }
+        for(int i = 1; i <= num; i++)
+            if(i != root && in_val[i] == ll_INF)
+                return -1;
+        int loop_cnt = 0;
+        for(int i = 1; i <= num; i++)
+            fa[i] = loop_id[i] = 0;
+        for(int i = 1; i <= num; i++) {
+            if(i == root)
+                continue;
+            DMST += in_val[i];
+            int now = i;
+            while(fa[now] != i && loop_id[now] == 0 && now != root) {
+                fa[now] = i;
+                now = in_u[now];
+            }
+            if(loop_id[now] == 0 && now != root) {
+                loop_id[now] = ++loop_cnt;
+                do {
+                    now = in_u[now];
+                    loop_id[now] = loop_cnt;
+                } while(fa[now] != i);
+            }
+        }
+        if(loop_cnt == 0)
+            break;
+        for(int i = 1; i <= num; i++)
+            if(loop_id[i] == 0)
+                loop_id[i] = ++loop_cnt;
+        for(int i = 1; i <= m; i++) {
+            if(loop_id[e[i].u] != loop_id[e[i].v])
+                e[i].val -= in_val[e[i].v];
+            e[i].u = loop_id[e[i].u], e[i].v = loop_id[e[i].v];
+        }
+        root = loop_id[root];
+        num = loop_cnt;
+    }
+    return DMST;
+}
+```
+
+
 
 ### 严格次小生成树
 
@@ -2131,3 +2195,4 @@ void solve() {
 }
 ```
 
+### 
