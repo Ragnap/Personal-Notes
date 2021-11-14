@@ -768,7 +768,7 @@ ll BIT_sum(int i) {
 ## 线段树
 
 ```c++
-struct Node {
+struct Tree {
 	int l, r;
 	ll val;
 	ll add;
@@ -1635,10 +1635,10 @@ int spfa_SLF(int u) {
     while (!q.empty())q.pop_back();
 	q.push_back(u);
     for(int i=0;i<=n;i++)dis[i] = ll_INF;
-    dis[u]=0;
+    len[u] = dis[u] = 0;
 	while (!q.empty()) {
 		u = q.front(); q.pop_front();
-		len[u] = dis[u] = 0;
+		inq[u] = 0;
 		for (int i = head[u]; i; i = e[i]._next) {
 			int v = e[i].v;
 			if (dis[v] > dis[u] + e[i].val) {
@@ -1832,8 +1832,7 @@ void floyd() {
 			if (e[i][k] ^ ll_INF) {
 				for (int j = i + 1; j < k; j++) {
 					if (e[k][j] ^ ll_INF && dis[j][i] ^ ll_INF) {
-						min_loop = _min(min_loop, e[i][k] + e[k][j] +
-							dis[j][i]);
+						min_loop = _min(min_loop, e[i][k] + e[k][j] + dis[j][i]);
 					}
 				}
 			}
@@ -2195,4 +2194,266 @@ void solve() {
 }
 ```
 
-### 
+## 树
+
+### 树链剖分
+
+```c++
+int siz[MX], fa[MX], son[MX], dep[MX], top[MX];
+int dfn[MX], [MX], trcnt = 0;//以DFS序作为线段树节点,real[i]表示线段树节点i的实际编号
+void DFS1(int u) {
+    siz[u] = 1;
+    son[u] = 0;
+    for(int i = head[u]; i; i = e[i]._next) {
+        int v = e[i].v;
+        if(v != fa[u]) {
+            fa[v] = u;
+            dep[v] = dep[u] + 1;
+            DFS1(v);
+            siz[u] += siz[v];
+            if(son[u] == 0 || siz[v] > siz[son[u]])
+                son[u] = v;
+        }
+    }
+}
+void DFS2(int u, int tp) {
+    dfn[u] = ++trcnt;
+    real[trcnt] = u;
+    top[u] = tp;
+    if(son[u])
+        DFS2(son[u], tp);
+    for(int i = head[u]; i; i = e[i]._next) {
+        int v = e[i].v;
+        if(v != fa[u] && v != son[u])
+            DFS2(v, v);
+    }
+}
+```
+
+### LCA
+
+#### 倍增做法
+
+```c++
+int anc[MX][25] = {0}, dep[MX] = {0};
+void DFS(int u, int fa) {
+    dep[u] = dep[fa] + 1;
+    anc[u][0] = fa;
+    for(int i = 1; i <= 20; i++)
+        anc[u][i] = anc[anc[u][i - 1]][i - 1];
+    for(int i = head[u]; i; i = e[i]._next)
+        if(e[i].v != fa)
+            DFS(e[i].v, u);
+}
+int lca(int x, int y) {
+    if(dep[x] < dep[y])
+        swap(x, y);
+    for(int i = 20; i >= 0; i--)
+        if(dep[y] <= dep[anc[x][i]])
+            x = anc[x][i];
+    if(x == y)
+        return x;
+    for(int i = 20; i >= 0; i--) {
+        if(anc[x][i] != anc[y][i]) {
+            x = anc[x][i];
+            y = anc[y][i];
+        }
+    }
+    return anc[x][0];
+}
+```
+
+#### 树链剖分做法
+
+```c++
+int lca(int x, int y) {
+    while(top[x] != top[y]) {
+        if(dep[top[x]] > dep[top[y]])
+            swap(x, y);
+        y = fa[top[y]];
+    }
+    return dep[x] > dep[y] ? y : x;
+}
+```
+
+### 树上区间操作
+
+基于线段树和树链剖分，线段树部分只需改动建树操作为 `tr[i].val=a[dfn[l]];  `
+
+#### 修改子树内所有节点
+
+```c++
+void tree_add(int u,ll k){
+	int begin=dfn[u];
+	int end=begin+size[u]-1;
+	update(begin,end,1,k);
+}
+```
+
+#### 查询子树内的所有节点
+
+```c++
+ll tree_sum(int u) {
+    int begin = dfn[u];
+    int end = begin + siz[u] - 1;
+    ll sum = query(1, begin, end) % MOD;
+    return sum;
+}
+```
+
+#### 修改链上的所有节点
+
+```c++
+void line_add(int u, int v, ll k) {
+    while(top[u] ^ top[v]) {
+        if(dep[top[u]] < dep[top[v]])
+            swap(u, v);
+        update(1, dfn[top[u]], dfn[u], k);
+        u = fa[top[u]];
+    }
+    if(dep[u] > dep[v])
+        swap(u, v);
+    update(1, dfn[u], dfn[v], k);
+}
+```
+
+#### 查询链上的所有节点
+
+```c++
+ll line_sum(int u, int v) {
+    ll sum = 0;
+    while(top[u] ^ top[v]) {
+        if(dep[top[v]] > dep[top[u]])
+            swap(u, v);
+        sum += query(1, dfn[top[u]], dfn[u]);
+        sum %= MOD;
+        u = fa[top[u]];
+    }
+    if(dep[u] > dep[v])
+        swap(u, v);
+    sum += query(1, dfn[u], dfn[v]);
+    sum %= MOD;
+    return sum;
+}
+```
+
+## 网络流
+
+### 最大流
+
+#### Dinic
+
+```c++
+int dep[MX], nowe[MX], st, ed;
+queue<int> q;
+bool BFS() {
+    for(int i = 0; i <= n; i++)
+        dep[i] = 0;
+    dep[st] = 1;
+    q.push(st);
+    while(!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for(int i = head[u]; i; i = e[i]._next) {
+            int v = e[i].v;
+            if(e[i].val > 0 && dep[v] == 0) {
+                dep[v] = dep[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    for(int i = 0; i <= n; i++)
+        nowe[i] = head[i];
+    return dep[ed];
+}
+ll DFS(int u, ll flow) {
+    if(u == ed)
+        return flow;
+    ll last = flow;
+    for(int i = nowe[u]; i; i = e[i]._next) {
+        nowe[u] = i;
+        int v = e[i].v;
+        if(dep[v] == dep[u] + 1 && e[i].val) {
+            ll nflow = DFS(v, _min(last, e[i].val));
+            if(nflow > 0) {
+                e[i].val -= nflow;
+                e[i ^ 1].val += nflow;
+                last -= nflow;
+                if(last == 0)
+                    return flow;
+            }
+        }
+    }
+    if(last == flow)
+        dep[u] = 0;
+    return flow - last;
+}
+ll Dinic() {
+    ll nowflow = 0, maxflow = 0;
+    while(BFS())
+        while(nowflow = DFS(st, ll_INF))
+            maxflow += nowflow;
+    return maxflow;
+}
+```
+
+#### LSAP
+
+```c++
+int dep[MX], gap[MX], nowe[MX], st, ed;
+queue<int> q;
+void BFS() {
+    for(int i = 0; i <= n; i++)
+        gap[i] = dep[i] = 0;
+    dep[ed] = 1;
+    gap[1]++;
+    q.push(ed);
+    while(!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for(int i = head[u]; i; i = e[i]._next) {
+            int v = e[i].v;
+            if(dep[v] == 0) {
+                dep[v] = dep[u] + 1;
+                gap[dep[v]]++;
+                q.push(v);
+            }
+        }
+    }
+}
+ll DFS(int u, ll flow) {
+    if(u == ed)
+        return flow;
+    ll last = flow;
+    for(int i = head[u]; i; i = e[i]._next) {
+        nowe[u] = i;
+        int v = e[i].v;
+        if(dep[v] == dep[u] - 1 && e[i].val) {
+            ll nflow = DFS(v, _min(last, e[i].val));
+            if(nflow > 0) {
+                e[i].val -= nflow;
+                e[i ^ 1].val += nflow;
+                last -= nflow;
+                if(last == 0)
+                    return flow;
+            }
+        }
+    }
+    gap[dep[u]]--;
+    if(gap[dep[u]] == 0)
+        dep[st] = n + 10;
+    gap[++dep[u]]++;
+    return flow - last;
+}
+ll lSAP() {
+    ll maxflow = 0;
+    BFS();
+    while(dep[st] <= n) {
+        for(int i = 0; i <= n; i++)
+            nowe[i] = head[i];
+        maxflow += DFS(st, ll_INF);
+    }
+    return maxflow;
+}
+```
+
