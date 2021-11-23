@@ -100,7 +100,7 @@ map<int,string>::iterator prev=mp.upper_bound( 10 );//值
 
 ### operator []
 
-在访问不存在的时会新插入一个 并设为默认值（比如说 int 默认 0, string 默认 “”）
+**在访问不存在的时会新插入一个** 并设为默认值（比如说 int 默认 0, string 默认 “”）
 
 ### mp.upper_bound() & mp.lower_bound()
 
@@ -684,8 +684,49 @@ struct Bign {
 };
 ```
 
-
 # 数据结构
+
+## 并查集
+
+### 路径压缩
+
+```c++
+int _fa[MX] = { 0 };
+int _find(int x) {
+	return x == _fa[x] ? x : _fa[x] = _find(_fa[x]);
+}
+void _union(int x, int y) {
+	int xx = _find(x), yy = _find(y);
+	if (xx == yy)
+		return;
+	if (xx > yy)
+		_swap(xx, yy);
+	_fa[yy] = xx;
+}
+```
+
+### 按秩合并
+
+以树的深度为节点的秩
+
+```c++
+int _fa[MX] = {0}, _rank[MX] = {0};
+int _find(int x) {
+    return x == _fa[x] ? x : _find(_fa[x]);
+}
+void _union(int x, int y) {
+    int xx = _find(x), yy = _find(y);
+    if(xx == yy)
+        return;
+    if(_rank[xx] < _rank[yy])
+        _swap(xx, yy);
+    _fa[yy] = xx;
+    if(_rank[xx] == _rank[yy])
+        _rank[xx]++;
+}
+```
+
+
 
 ## 单调队列
 ```c++
@@ -824,6 +865,116 @@ void update(int i, int l, int r, ll val) {
 	return;
 }
 ```
+
+## 主席树
+
+```c++
+struct Node {
+    int l, r;
+    int val;
+} tr[MX << 5];
+int node_cnt = 0, root[MX];
+int build(int l, int r) {
+    int i = ++node_cnt;
+    tr[i].l = tr[i].r = 0, tr[i].val = 0;
+    if(l == r) {
+        tr[i].val = a[l];
+        return i;
+    }
+    int mid = (l + r) >> 1;
+    tr[i].l = build(l, mid);
+    tr[i].r = build(mid + 1, r);
+    return i;
+}
+int update(int pre, int l, int r, int x, int val) {
+    int i = ++node_cnt;
+    tr[i] = tr[pre];
+    if(l == r) {
+        tr[i].val = val;
+        return i;
+    }
+    int mid = (l + r) >> 1;
+    if(mid >= x)
+        tr[i].l = update(tr[i].l, l, mid, x, val);
+    else
+        tr[i].r = update(tr[i].r, mid + 1, r, x, val);
+    return i;
+}
+int query(int now, int l, int r, int k) {
+    if(l == r)
+        return tr[now].val;
+    int mid = (l + r) >> 1;
+    if(mid >= k)
+        return query(tr[now].l, l, mid, k);
+    else
+        return query(tr[now].r, mid + 1, r, k);
+}
+```
+
+### 区间第 $ k  $ 小值
+
+离散化 + 单点插入更新主席树 +前缀和求区间数量
+
+```c++
+int n, m, a[MX], b[MX];
+struct Node {
+    int l, r;
+    int cnt;
+} tr[MX * 32];
+int node_cnt = 0, root[MX];
+int build(int l, int r) {
+    int i = ++node_cnt;
+    tr[i].l = tr[i].r = 0, tr[i].cnt = 1;
+    if(l == r)
+        return i;
+    int mid = (l + r) >> 1;
+    tr[i].l = build(l, mid);
+    tr[i].r = build(mid + 1, r);
+    return i;
+}
+int update(int pre, int l, int r, int val) {
+    int i = ++node_cnt;
+    tr[i] = tr[pre], tr[i].cnt = tr[pre].cnt + 1;
+    if(l == r)
+        return i;
+    int mid = (l + r) >> 1;
+    if(mid >= val)
+        tr[i].l = update(tr[pre].l, l, mid, val);
+    else
+        tr[i].r = update(tr[pre].r, mid + 1, r, val);
+    return i;
+}
+int query(int pre, int now, int l, int r, int k) {
+    if(l == r)
+        return l;
+    int num = tr[tr[now].l].cnt - tr[tr[pre].l].cnt, mid = (l + r) >> 1;
+    if(num >= k)
+        return query(tr[pre].l, tr[now].l, l, mid, k);
+    else
+        return query(tr[pre].r, tr[now].r, mid + 1, r, k - num);
+}
+void Init() {
+    n = _r(), m = _r();
+    for(int i = 1; i <= n; i++) {
+        a[i] = b[i] = _r();
+    }
+}
+void solve() {
+    sort(b + 1, b + n + 1);
+    int size = unique(b + 1, b + n + 1) - (b + 1);
+    root[0] = build(1, size);
+    for(int i = 1; i <= n; i++) {
+        int p = lower_bound(b + 1, b + 1 + size, a[i]) - b;
+        root[i] = update(root[i - 1], 1, size, p);
+    }
+    while(m--) {
+        int l = _r(), r = _r(), k = _r();
+        printf("%d\n", b[query(root[l - 1], root[r], 1, size, k)]);
+    }
+}
+```
+
+
 
 # 数学
 
@@ -1422,7 +1573,7 @@ $dp[j]=\max(dp[j],\ dp[j-w[i]]+v[i])$ , 其中 $dp[i]$ 表示背包容量为 $i$
 
 ```c++
 for(int i = 0; i < n; i++) {
-    for(int j = W; j >= c[i]; j--) {
+    for(int j = W; j >= w[i]; j--) {
         dp[j] = _max(dp[j], dp[j - w[i]] + v[i]);
     }
 }
@@ -1461,7 +1612,7 @@ for(int i = 0; i < n; i++) {
     }
 }
 for(int i = MX - 1; i >= 0; i--) {
-    if(dp[i] <= m) {
+    if(dp[i] <= W) {
         ans=i;
         break;
     }
@@ -1947,23 +2098,6 @@ int 2_SAT() {
 
 ## 生成树
 
-### 并查集
-
-```c++
-int _fa[MX] = { 0 };
-int _find(int x) {
-	return x == _fa[x] ? x : _fa[x] = _find(_fa[x]);
-}
-void _union(int x, int y) {
-	int xx = _find(x), yy = _find(y);
-	if (xx == yy)
-		return;
-	if (xx > yy)
-		_swap(xx, yy);
-	_fa[yy] = xx;
-}
-```
-
 ### 最小生成树
 
 无向图概念
@@ -2376,8 +2510,7 @@ ll DFS(int u, ll flow) {
         if(dep[v] == dep[u] + 1 && e[i].val) {
             ll nflow = DFS(v, _min(last, e[i].val));
             if(nflow > 0) {
-                e[i].val -= nflow;
-                e[i ^ 1].val += nflow;
+                e[i].val -= nflow, e[i ^ 1].val += nflow;
                 last -= nflow;
                 if(last == 0)
                     return flow;
@@ -2431,8 +2564,7 @@ ll DFS(int u, ll flow) {
         if(dep[v] == dep[u] - 1 && e[i].val) {
             ll nflow = DFS(v, _min(last, e[i].val));
             if(nflow > 0) {
-                e[i].val -= nflow;
-                e[i ^ 1].val += nflow;
+                e[i].val -= nflow, e[i ^ 1].val += nflow;
                 last -= nflow;
                 if(last == 0)
                     return flow;
@@ -2455,5 +2587,98 @@ ll lSAP() {
     }
     return maxflow;
 }
+```
+
+### 最小费用最大流
+
+建边时反向边的费用取相反数，流量取0
+
+#### Dinic
+
+```
+int nowe[MX], vis[MX], st, ed;
+ll dis[MX], mincost = 0;
+queue<int> q;
+bool SPFA() {
+    for (int i = 0; i <= n; i++)
+        vis[i] = 0, dis[i] = ll_INF;
+    vis[st] = 1;
+    dis[st] = 0;
+    q.push(st);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        vis[u] = 0;
+        for (int i = head[u]; i; i = e[i]._next) {
+            int v = e[i].v;
+            if (e[i].val > 0 && dis[v] > dis[u] + e[i].cost) {
+                dis[v] = dis[u] + e[i].cost;
+                if (vis[v] == 0) {
+                    vis[v] = 1;
+                    q.push(v);
+                }
+            }
+        }
+    }
+    for (int i = 0; i <= n; i++)
+        nowe[i] = head[i];
+    return dis[ed] != ll_INF;
+}
+ll DFS(int u, ll flow) {
+    vis[u] = 1;
+    if (u == ed)
+        return flow;
+    ll last = flow;
+    for (int i = nowe[u]; i; i = e[i]._next) {
+        nowe[u] = i;
+        int v = e[i].v;
+        if ((vis[v] == 0 || v == ed) && dis[v] == dis[u] + e[i].cost && e[i].val) {
+            ll nflow = DFS(v, _min(last, e[i].val));
+            if (nflow > 0) {
+                mincost += e[i].cost * nflow;
+                e[i].val -= nflow, e[i ^ 1].val += nflow;
+                last -= nflow;
+                if (last == 0)
+                    return flow;
+            }
+        }
+    }
+    if (last == flow)
+        dis[u] = ll_INF;
+    return flow - last;
+}
+void Min_Cost_Dinic() {
+    ll nowflow = 0, maxflow = 0;
+    while (SPFA())
+        while (nowflow = DFS(st, ll_INF))
+            maxflow += nowflow;
+    cout << maxflow << " " << mincost << endl;
+}
+```
+
+## 二分图
+
+### 最大匹配
+
+#### 最大流做法
+
+![image-20211116210953397](C:\Users\12038\AppData\Roaming\Typora\typora-user-images\image-20211116210953397.png)
+
+建立超级源点和超级汇点，源点到x连流量wei
+
+```c++
+for(int i = 1; i <= n; i++) {
+        addedge(0, i, 1);
+        addedge(i, 0, 0);
+    }
+    for(int i = 1; i <= m; i++) {
+        addedge(n + i, n + m + 1, 1);
+        addedge(n + m + 1, n + i, 0);
+    }
+    for(int i = 0; i < f; i++) {
+        cin >> u >> v;
+        addedge(u, n + v, 1);
+        addedge(n + v, u, 0);
+    }
 ```
 
