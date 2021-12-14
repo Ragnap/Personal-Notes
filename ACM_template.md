@@ -121,12 +121,6 @@ $O(log\ n) $  返回以 $ key $ 排序的 upper_bound 和 lower_bound，在不�
 
 # 高精
 
-## 手动扩栈
-
-```c++
-
-```
-
 ## 无负数
 
 ```c++
@@ -1110,10 +1104,11 @@ mat mat_pow(mat a, ll x) {
 bool Miller_Rabin(ll p) {
 	if (p < 2) return 0;
 	if (p != 2 && p % 2 == 0) return 0;
-	ll check_prime[6]= { 2 , 3 , 5 , 233 , 331 };
+    //ll check_prime[6]= { 2 , 3 , 5 , 233 , 331 };
+	ll check_prime[12]= {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}; 
 	ll s = p - 1;
 	while (!(s & 1)) s >>= 1;
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 12; ++i) {
 		if (p == check_prime[i]) return 1;
 		ll t = s, m = _pow(check_prime[i], s, p);
 		while (t != p - 1 && m != 1 && m != p - 1) {
@@ -1129,8 +1124,7 @@ bool Miller_Rabin(ll p) {
 ### 质数筛法
 
 ```c++
-int pri[MX] = { 0 };
-int not_pri[MX] = { 0 };
+int pri[MX] = { 0 }, not_pri[MX] = { 0 };
 void EularSieve(int range) {
 	for (int i = 2; i < range; i++) {
 		if (not_pri[i] == 0)
@@ -1144,13 +1138,12 @@ void EularSieve(int range) {
 }
 ```
 
-
-
 ### 质因数分解
 
 p[i]:质因数表 , pcnt[i]:对应质因数的次数
 
 ```c++
+int p[MX] = { 0 }, pcnt[MX] = { 0 };
 void PrimeDevide(ll num) {
 	for (int i = 1; i < pri[0] && (ll)pri[i] * pri[i] <= num; i++) {
 		if (num % pri[i] == 0) {
@@ -1168,15 +1161,38 @@ void PrimeDevide(ll num) {
 }
 ```
 
+### 快速质因数分解
+
+再说Pollard-Rho算法
+
+### 欧拉函数
+
+求小于等于 $n$ 的正整数中与 $n$ 互质的数的数量
+
+```c++
+ll phi(ll x) {
+    ll ans = x;
+    for(ll i = 2; i * i < x; i++) {
+        if(x % i == 0) {
+            ans -= ans / i;
+            while(x % i == 0)
+                x /= i;
+        }
+    }
+    if(x != 1)
+        ans -= ans / x;
+    return ans;
+}
+```
+
+
+
 ## $gcd$ 与 $lcm$
 
 ```c++
 ll gcd(ll a, ll b) {
 	return b == 0 ? a : gcd(b, a % b);
 }
-```
-
-```c++
 ll lcm(ll a, ll b) {
 	return a / gcd(a, b) * b;
 }
@@ -1273,7 +1289,7 @@ void get_fac_inv(int range) {
 
 ## 组合数学
 
-计算 $ A_n^m $ 和 $ C_n^m $ ( $ n $ 选 $m$ )，需要先进行阶乘逆元的计算
+计算 $ A_n^m $ 和 $ C_n^m $ ( $ n $ 选 $m$ )，即 $n \choose m $，需要先进行阶乘逆元的计算
 
 ```c++
 ll _A(int n, int m) {
@@ -1287,6 +1303,38 @@ ll _C(int n, int m) {
 	return fac[n] * fac_inv[n - m] % MOD * fac_inv[m] % MOD;
 }
 ```
+
+### Pascal公式
+
+$$
+{n \choose k}={n-1 \choose k}+{n-1 \choose k-1}
+$$
+
+### 置换式
+
+$$
+k {n \choose k}=n{n-1\choose k-1}
+$$
+
+### 范德蒙德卷积公式
+
+$$
+\sum_{k=0}^m{m_1 \choose k}{m_2 \choose n-k}={m_1+m_2 \choose n}
+$$
+
+## 常用数列
+
+### 卡特兰数
+
+$\{1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440, 9694845\}$
+
+### 求法
+
+通项：$ \displaystyle C_n=\frac{1}{n+1} {2n \choose n}$	递推：$\displaystyle C_n=\frac{4n+2}{n+2}C_{n-1}$	极限：$\displaystyle C_n \sim \frac{4^n}{(\sqrt n)^3 \sqrt\pi}$
+
+### 应用
+
+二叉树的方案数，栈的出栈顺序种数， $n$对括号的匹配方式
 
 # 计算几何
 
