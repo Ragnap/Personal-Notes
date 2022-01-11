@@ -118,6 +118,8 @@ $O(log\ n) $  返回以 $ key $ 排序的 upper_bound 和 lower_bound，在不�
 
 基于哈希表
 
+## set / multiset
+
 
 # 高精
 
@@ -972,6 +974,85 @@ void solve() {
 
 # 数学
 
+## 基本类
+
+### 矩阵
+
+```c++
+const int MAT_SIZ = 2;  //矩阵阶数
+struct Mat {
+    int num[MAT_SIZ][MAT_SIZ];
+    Mat() {
+        clear();
+    }
+    void clear() {
+        for(int i = 0; i < MAT_SIZ; i++)
+            for(int j = 0; j < MAT_SIZ; j++)
+                num[i][j] = 0;
+    }
+    void unit() {
+        clear();
+        for(int i = 0; i < MAT_SIZ; i++)
+            num[i][i] = 1;
+    }
+    Mat operator+(const Mat& b) const {
+        Mat c;
+        for(int i = 0; i < MAT_SIZ; i++) {
+            for(int j = 0; j < MAT_SIZ; j++) {
+                c.num[i][j] = num[i][j] + b.num[i][j];
+                c.num[i][j] %= MOD;
+            }
+        }
+        return c;
+    }
+    Mat operator*(const Mat& b) const {
+        Mat c;
+        for(int i = 0; i < MAT_SIZ; i++) {
+            for(int j = 0; j < MAT_SIZ; j++) {
+                for(int k = 0; k < MAT_SIZ; k++) {
+                    c.num[i][j] += ((ll)num[i][k] * b.num[k][j]) % MOD;
+                    c.num[i][j] %= MOD;
+                }
+            }
+        }
+        return c;
+    }
+    Mat operator^(ll x) {
+        Mat res, base;
+        res.unit();
+        base = (*this);
+        while(x) {
+            if(x & 1)
+                res = res * base;
+            base = base * base;
+            x >>= 1;
+        }
+        return res;
+    }
+    Mat operator+=(const Mat& b) {
+        return *this = (*this) + b;
+    }
+    Mat operator*=(const Mat& b) {
+        return *this = (*this) * b;
+    }
+    Mat operator^=(const ll x) {
+        return *this = (*this) ^ x;
+    }
+    bool empty() {
+        for(int i = 0; i < MAT_SIZ; i++) {
+            if(num[i][i] != 1)
+                return 0;
+            for(int j = i + 1; j < MAT_SIZ; j++)
+                if(num[i][j] != 0 || num[j][i != 0])
+                    return 0;
+        }
+        return 1;
+    }
+};
+```
+
+
+
 ## 快速幂
 
 计算 $base^n$
@@ -1062,32 +1143,9 @@ $$
 $$
 
 ```c++
-const int MAT_SIZ = 10;//矩阵阶数
-struct mat {
-	ll num[MAT_SIZ][MAT_SIZ];
-	mat() {
-		memset(num, 0, sizeof(num));
-	}
-	void reset() {
-		for (int i = 0; i < MAT_SIZ; i++)
-			num[i][i] = 1;
-	}
-	mat operator * (const mat& b) {
-		mat c;
-		for (int i = 0; i < MAT_SIZ; i++) {
-			for (int j = 0; j < MAT_SIZ; j++) {
-				for (int k = 0; k < MAT_SIZ; k++) {
-					c.num[i][j] += (num[i][k] * b.num[k][j]) % MOD;
-					c.num[i][j] %= MOD;
-				}
-			}
-		}
-		return c;
-	}
-};
-mat mat_pow(mat a, ll x) {
-	mat res, base;
-	res.reset(); base = a;
+Mat mat_pow(Mat a, ll x) { //现已在MAT类里完成封装
+	Mat res, base;
+	res.unit(); base = a;
 	while (x) {
 		if (x & 1)
 			res = res * base;
@@ -1324,15 +1382,39 @@ $$
 
 ## 常用数列
 
+### 斐波那契数列
+
+$\{0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181,6765,10946,17711,28657,46368,75025,121393,196418,317811\}$
+
+资料：http://gradprogram.math.arizona.edu/~ura-reports/071/Campbell.Charles/Final.pdf
+
+#### 求法
+
+通项： $ \displaystyle F_n=\frac{1}{\sqrt5}*[(\frac{1+\sqrt5}{2})^n-(\frac{1-\sqrt5}{2})^n]$
+
+递推： $ \displaystyle F_n= F_{n-1}+F_{n-2}$    (矩阵快速幂)
+
+#### 循环节
+
+
+
+
+
+#### 应用
+
 ### 卡特兰数
 
 $\{1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440, 9694845\}$
 
-### 求法
+#### 求法
 
-通项：$ \displaystyle C_n=\frac{1}{n+1} {2n \choose n}$	递推：$\displaystyle C_n=\frac{4n+2}{n+2}C_{n-1}$	极限：$\displaystyle C_n \sim \frac{4^n}{(\sqrt n)^3 \sqrt\pi}$
+通项：$ \displaystyle C_n=\frac{1}{n+1} {2n \choose n}$	
 
-### 应用
+递推：$\displaystyle C_n=\frac{4n+2}{n+2}C_{n-1}$	
+
+极限：$\displaystyle C_n \sim \frac{4^n}{(\sqrt n)^3 \sqrt\pi}$
+
+#### 应用
 
 二叉树的方案数，栈的出栈顺序种数， $n$对括号的匹配方式
 
@@ -1340,44 +1422,45 @@ $\{1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 26744
 
 ## 基本类
 
+### 二维向量
+
 ```c++
 template<typename T>
 struct Vector2 {
-	T x, y;
-	Vector2() {
-		x = y = 0;
-	}
-	T get_len() {
-		return sqrt(x * x + y * y);
-	}
-	Vector2 operator + (const Vector2& b) const {
-		Vector2 c;
-		c.x = x + b.x;
-		c.y = x + b.y;
-		return c;
-	}
-	Vector2 operator - (const Vector2& b) const {
-		Vector2 c;
-		c.x = x - b.x;
-		c.y = x - b.y;
-		return c;
-	}
-    Vector2 rotate (const double& theta)const{
+    T x, y;
+    Vector2() {
+        x = y = 0;
+    }
+    T get_len() {
+        return sqrt(x * x + y * y);
+    }
+    Vector2 operator+(const Vector2& b) const {
+        Vector2 c;
+        c.x = x + b.x;
+        c.y = x + b.y;
+        return c;
+    }
+    Vector2 operator-(const Vector2& b) const {
+        Vector2 c;
+        c.x = x - b.x;
+        c.y = x - b.y;
+        return c;
+    }
+    Vector2 rotate(const double& theta) const {
         Vector2 c;
         c.x = x * cos(theta) - y * sin(theta);
         c.y = y * cos(theta) + x * sin(theta);
         return c;
     }
-	friend T dot(const Vector2& a, const Vector2& b) {//点乘
-		return a.x * b.x + a.y * b.y;
-	}
-	friend T cross(const Vector2& a, const Vector2& b) {//叉乘
-		return a.x * b.y - a.y * b.x;
-	}
+    friend T dot(const Vector2& a, const Vector2& b) {  //点乘
+        return a.x * b.x + a.y * b.y;
+    }
+    friend T cross(const Vector2& a, const Vector2& b) {  //叉乘
+        return a.x * b.y - a.y * b.x;
+    }
 };
 typedef Vector2<int> Point;
 typedef Vector2<double> Vec2;
-
 ```
 
 ## 面积
@@ -1451,6 +1534,52 @@ bool cmp(const Point& p1, const Point& p2) {
     return p1.x < p2.x;
 }
 ```
+
+## 距离
+
+### 类型
+
+#### 欧几里得距离 
+
+$\sqrt{(x_1-x_2)^2+(y_1-y_2)}$
+
+```c++
+double e_dis(Point a, Point b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+```
+
+#### 曼哈顿距离
+
+$\abs{x_1-x_2}+\abs{y_1-y_2}$
+
+```c++
+int m_dis(Point a, Point b) {
+    return _abs(a.x - b.x) + _abs(a.y - b.y);
+}
+```
+
+#### 切比雪夫距离
+
+$max(\abs{x_1-x_2},\abs{y_1-y_2})$
+
+```c++
+int c_dis(Point a, Point b) {
+    return _max(_abs(a.x - b.x), _abs(a.y - b.y));
+}
+```
+
+#### 曼哈顿与切比雪夫转化
+
+可以用于**求曼哈顿距离小于一定范围的点对**，**求切比雪夫距离之和**
+
+通用一点的话就是：求曼哈顿距离之差(消去绝对值)，求切比雪夫距离之和（消掉max)，需要转化
+
+主要思想是坐标变换，切比雪夫坐标系的等高线是曼哈顿坐标系的等高线的外接正方形：
+
+已知点集 $(x,y)$，求任意点对的**曼哈顿距离**: 可将所有点变化为 $(x+y,x-y)$后求新坐标系下对应点对的**切比雪夫距离**；
+
+已知点集 $(x,y)$，求任意点对的**切比雪夫距离**: 可将所有点变化为 $\displaystyle (\frac{x+y}{2},\frac{x-y}{2})$后求新坐标系下对应点对的**曼哈顿距离**；
 
 
 
@@ -1804,7 +1933,7 @@ void dijkstra(int s) {
 queue<int> q;
 int inq[MX]; ll dis[MX] = { 0 };
 void SPFA(int s) {
-    while (!q.empty())q.pop_back();
+    while (!q.empty())q.pop();
 	q.push(s);
     for(int i=0;i<=n;i++)dis[i] = ll_INF;
 	dis[s] = 0;
@@ -2522,6 +2651,8 @@ ll line_sum(int u, int v) {
 ## 网络流
 
 ### 最大流
+
+建边时反向边的流量取0
 
 #### Dinic
 
