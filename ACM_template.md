@@ -738,6 +738,57 @@ void _union(int x, int y) {
 }
 ```
 
+### 带权并查集
+
+```
+class WeightUnionSet {
+public:
+    int n, fa[MX], num[MX];
+    ll dis[MX];
+    void reset(int size = 0) {
+        if(size != 0)
+            n = size;
+        for(int i = 0; i <= n; i++) {
+            fa[i] = i;
+            num[i] = 1;
+            dis[i] = 0;
+        }
+    }
+    int _find(int x) {
+        if(x == fa[x])
+            return x;
+        int root = _find(fa[x]);
+        dis[x] += dis[fa[x]];
+        return fa[x] = root;
+    }
+    void _union(int u, int v, ll val) {  // u-v=d
+        _find(u), _find(v);
+        val += dis[u] - dis[v];
+        u = _find(u), v = _find(v);
+        if(u == v)
+            return;
+        if(num[u] < num[v])
+            _swap(u, v), val = -val;
+        num[u] += num[v];
+        dis[v] = val;
+        fa[v] = u;
+    }
+    ll diff(int u, int v) {  // u-v
+        _find(u), _find(v);
+        return dis[v] - dis[u];
+    }
+    bool is_same(int x, int y) {
+        return _find(x) == _find(y);
+    }
+    bool is_root(int x) {
+        return x == _find(x);
+    }
+    int size(int x) {
+        return num[_find(x)];
+    }
+};
+```
+
 
 
 ## 单调队列
@@ -820,24 +871,26 @@ ll BIT_sum(int i) {
 
 ## 线段树
 
+注意在求RMQ时**不要使用三目运算符**！
+
 ```c++
 struct Tree {
 	int l, r;
 	ll val;
 	ll add;
-}tr[MX << 2] = { 0 };
+}tr[MX << 2];
 ll a[MX] = { 0 };
 void pushdown(int i) {
 	if (tr[i].add == 0)
 		return;
 	if (tr[i].l == tr[i].r) {
+
 		tr[i].add = 0;
 		return;
 	}
 	tr[i << 1].val += tr[i].add * (tr[i << 1].r - tr[i << 1].l + 1);
 	tr[i << 1].add += tr[i].add;
-	tr[i << 1 | 1].val += tr[i].add * (tr[i << 1 | 1].r - tr[i << 1 | 1].l
-		+ 1);
+	tr[i << 1 | 1].val += tr[i].add * (tr[i << 1 | 1].r - tr[i << 1 | 1].l + 1);
 	tr[i << 1 | 1].add += tr[i].add;
 	tr[i].add = 0;
 }
@@ -850,8 +903,9 @@ void build(int i, int l, int r) {
 		tr[i].val = a[l];
 		return;
 	}
-	build(i << 1, l, (l + r) >> 1);
-	build(i << 1 | 1, ((l + r) >> 1) + 1, r);
+    int mid = (l + r) >> 1;
+	build(i << 1, l, mid);
+	build(i << 1 | 1, mid + 1, r);
 	pushup(i);
 }
 ll query(int i, int l, int r) {
@@ -874,7 +928,6 @@ void update(int i, int l, int r, ll val) {
 	update(i << 1, l, r, val);
 	update(i << 1 | 1, l, r, val);
 	pushup(i);
-	return;
 }
 ```
 
