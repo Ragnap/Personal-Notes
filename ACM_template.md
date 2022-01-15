@@ -1,44 +1,50 @@
 # 基本框架
 
 ```c++
-#include <bits/stdc++> 
+#include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
 typedef unsigned int ull;
-typedef pair<ll, ll> pil;
+typedef pair<int, int> pil;
 const ll ll_INF = 0x3f3f3f3f3f3f3f3f;
 const ll ll_MAX = 0x7fffffffffffffff;
 const int int_INF = 0x3f3f3f3f;
 const int int_MAX = 0x7fffffff;
 const double EPS = 1e-7;
-#define R register 
-#define _max(a,b) ((a)>(b)?(a):(b)) 
-#define _min(a,b) ((a)<(b)?(a):(b))
-#define _abs(a) ((a)> 0 ?(a):-(a)) 
-#define _swap(a,b) ((a)^=(b)^=(a)^=(b)) 
-#define _eql(x,y) (_abs((x) - (y))<EPS)
+const double PI = acos(-1);
+#define R register
+#define _max(a, b) ((a) > (b) ? (a) : (b))
+#define _min(a, b) ((a) < (b) ? (a) : (b))
+#define _abs(a) ((a) > 0 ? (a) : -(a))
+#define _swap(a, b) ((a) ^= (b) ^= (a) ^= (b))
+#define _eql(x, y) (_abs((x) - (y)) < EPS)
+const int MOD = 1e9 + 7;
 const int MX = 1000010;
-const ll MOD = 1e9 + 7;
 ll _r() {
     ll x = 0, f = 1;
     char c = getchar();
-    while (c > '9' || c < '0') { if (c == '-')f = -1; c = getchar(); }
-    while (c >= '0' && c <= '9')x = (x << 3) + (x << 1) + (c ^ 48), c = getchar();
+    while(c > '9' || c < '0') {
+        if(c == '-')
+            f = -1;
+        c = getchar();
+    }
+    while(c >= '0' && c <= '9')
+        x = (x << 3) + (x << 1) + (c ^ 48), c = getchar();
     return f == -1 ? -x : x;
 }
 void Init() {
-
 }
 void solve() {
-
 }
 int main() {
+    std::ios::sync_with_stdio(false);
 #ifdef LOCAL
     freopen("data.in", "r", stdin);
     freopen("data.out", "w", stdout);
 #endif
     int t = 1;
-    while (t--) {
+    // cin>> t;
+    while(t--) {
         Init();
         solve();
     }
@@ -688,6 +694,10 @@ struct Bign {
 
 ```c++
 int _fa[MX] = { 0 };
+int _reset() {
+    for(int i = 0; i <= n; i++)
+        _fa[i] = i;
+}
 int _find(int x) {
 	return x == _fa[x] ? x : _fa[x] = _find(_fa[x]);
 }
@@ -707,6 +717,12 @@ void _union(int x, int y) {
 
 ```c++
 int _fa[MX] = {0}, _rank[MX] = {0};
+int _reset() {
+    for(int i = 0; i <= n; i++) {
+        rank[i] = 0;
+        _fa[i] = i;
+    }
+}
 int _find(int x) {
     return x == _fa[x] ? x : _find(_fa[x]);
 }
@@ -979,26 +995,26 @@ void solve() {
 ### 矩阵
 
 ```c++
-const int MAT_SIZ = 2;  //矩阵阶数
+const int MAT_SIZ = 55;  //矩阵阶数
 struct Mat {
     int num[MAT_SIZ][MAT_SIZ];
     Mat() {
         clear();
     }
-    void clear() {
-        for(int i = 0; i < MAT_SIZ; i++)
-            for(int j = 0; j < MAT_SIZ; j++)
+    void clear() {  // 清零
+        for(R int i = 0; i < MAT_SIZ; i++)
+            for(R int j = 0; j < MAT_SIZ; j++)
                 num[i][j] = 0;
     }
-    void unit() {
+    void unit() {  // 单位矩阵化
         clear();
-        for(int i = 0; i < MAT_SIZ; i++)
+        for(R int i = 0; i < MAT_SIZ; i++)
             num[i][i] = 1;
     }
     Mat operator+(const Mat& b) const {
         Mat c;
-        for(int i = 0; i < MAT_SIZ; i++) {
-            for(int j = 0; j < MAT_SIZ; j++) {
+        for(R int i = 0; i < MAT_SIZ; i++) {
+            for(R int j = 0; j < MAT_SIZ; j++) {
                 c.num[i][j] = num[i][j] + b.num[i][j];
                 c.num[i][j] %= MOD;
             }
@@ -1007,9 +1023,9 @@ struct Mat {
     }
     Mat operator*(const Mat& b) const {
         Mat c;
-        for(int i = 0; i < MAT_SIZ; i++) {
-            for(int j = 0; j < MAT_SIZ; j++) {
-                for(int k = 0; k < MAT_SIZ; k++) {
+        for(R int i = 0; i < MAT_SIZ; i++) {
+            for(R int j = 0; j < MAT_SIZ; j++) {
+                for(R int k = 0; k < MAT_SIZ; k++) {
                     c.num[i][j] += ((ll)num[i][k] * b.num[k][j]) % MOD;
                     c.num[i][j] %= MOD;
                 }
@@ -1017,10 +1033,41 @@ struct Mat {
         }
         return c;
     }
-    Mat operator^(ll x) {
-        Mat res, base;
+    Mat operator+=(const Mat& b) {
+        return *this = (*this) + b;
+    }
+    Mat operator*=(const Mat& b) {
+        return *this = (*this) * b;
+    }
+    bool is_empty() {
+        for(R int i = 0; i < MAT_SIZ; i++)
+            for(R int j = 0; j < MAT_SIZ; j++)
+                if(num[i][j] != 0)
+                    return 0;
+        return 1;
+    }
+    bool is_unit() {
+        for(R int i = 0; i < MAT_SIZ; i++) {
+            if(num[i][i] != 1)
+                return 0;
+            for(R int j = i + 1; j < MAT_SIZ; j++)
+                if(num[i][j] != 0 || num[j][i != 0])
+                    return 0;
+        }
+        return 1;
+    }
+    friend Mat reverse(const Mat& a) {  //转置
+        Mat c;
+        for(R int i = 0; i < MAT_SIZ; i++) {
+            for(R int j = i; j < MAT_SIZ; j++) {
+                c.num[i][j] = a.num[j][i];
+            }
+        }
+        return c;
+    }
+    friend Mat pow(Mat base, ll x) {  //矩阵快速幂
+        Mat res;
         res.unit();
-        base = (*this);
         while(x) {
             if(x & 1)
                 res = res * base;
@@ -1028,25 +1075,6 @@ struct Mat {
             x >>= 1;
         }
         return res;
-    }
-    Mat operator+=(const Mat& b) {
-        return *this = (*this) + b;
-    }
-    Mat operator*=(const Mat& b) {
-        return *this = (*this) * b;
-    }
-    Mat operator^=(const ll x) {
-        return *this = (*this) ^ x;
-    }
-    bool empty() {
-        for(int i = 0; i < MAT_SIZ; i++) {
-            if(num[i][i] != 1)
-                return 0;
-            for(int j = i + 1; j < MAT_SIZ; j++)
-                if(num[i][j] != 0 || num[j][i != 0])
-                    return 0;
-        }
-        return 1;
     }
 };
 ```
@@ -1885,6 +1913,8 @@ void huge_bag() {
 
 ## 基本框架
 
+### 链式前向星
+
 ```c++
 struct Node {
 	ll val;
@@ -1899,6 +1929,16 @@ void addedge(int u, int v, ll val) {
 	head[u] = cnt;
 }
 ```
+
+### 链接矩阵
+
+#### 应用
+
+1. 求某一长度路径数量
+
+   即求 **对应链接矩阵的 $k$ 次幂后，各数位上数字之和**
+
+   
 
 ## 最短路
 
