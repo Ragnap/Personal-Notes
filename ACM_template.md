@@ -11,7 +11,9 @@ const ll ll_MAX = 0x7fffffffffffffff;
 const int int_INF = 0x3f3f3f3f;
 const int int_MAX = 0x7fffffff;
 const double EPS = 1e-7;
-const double PI = acos(-1);
+const double PI = acos(-1.0);
+const int dy[8] = {-1, 0, 1, 0, 1, -1, 1, -1};
+const int dx[8] = {0, -1, 0, 1, 1, -1, -1, 1};
 #define R register
 #define _max(a, b) ((a) > (b) ? (a) : (b))
 #define _min(a, b) ((a) < (b) ? (a) : (b))
@@ -740,7 +742,7 @@ void _union(int x, int y) {
 
 ### 带权并查集
 
-```
+```c++
 class WeightUnionSet {
 public:
     int n, fa[MX], num[MX];
@@ -884,7 +886,6 @@ void pushdown(int i) {
 	if (tr[i].add == 0)
 		return;
 	if (tr[i].l == tr[i].r) {
-
 		tr[i].add = 0;
 		return;
 	}
@@ -930,6 +931,62 @@ void update(int i, int l, int r, ll val) {
 	pushup(i);
 }
 ```
+
+## KDTree - 静态
+
+本质上是记录了区间数据，以轴坐标的中位数为分界线，每层坐标轴交换的排序二叉树 [资料](https://www.luogu.com.cn/blog/van/qian-tan-pian-xu-wen-ti-yu-k-d-tree)
+
+```c++
+struct KDTree {
+    int lson, rson;
+    Point point;
+    Point mn;  //左下角点
+    Point mx;  //右上角点
+} tr[MX << 2];
+Point poi[MX];
+int KDcnt = 0;
+bool cmpx(Point a, Point b) {
+    if(a.x == b.x)
+        return a.y < b.y;
+    return a.x < b.x;
+}
+bool cmpy(Point a, Point b) {
+    if(a.y == b.y)
+        return a.y < b.y;
+    return a.y < b.y;
+}
+void pushup(int id) {
+    if(tr[id].lson) {
+        tr[id].mn.x = min(tr[id].mn.x, tr[tr[id].lson].mn.x);
+        tr[id].mn.y = min(tr[id].mn.y, tr[tr[id].lson].mn.y);
+        tr[id].mx.x = max(tr[id].mx.x, tr[tr[id].lson].mx.x);
+        tr[id].mx.y = max(tr[id].mx.y, tr[tr[id].lson].mx.y);
+    }
+    if(tr[id].rson) {
+        tr[id].mn.x = min(tr[id].mn.x, tr[tr[id].rson].mn.x);
+        tr[id].mn.y = min(tr[id].mn.y, tr[tr[id].rson].mn.y);
+        tr[id].mx.x = max(tr[id].mx.x, tr[tr[id].rson].mx.x);
+        tr[id].mx.y = max(tr[id].mx.y, tr[tr[id].rson].mx.y);
+    }
+}
+int build(int axis, int l, int r) {
+    if(l > r)
+        return 0;
+    int mid = (l + r) >> 1;
+    if(axis == 1)
+        nth_element(poi + l, poi + mid, poi + r + 1, cmpx);
+    else
+        nth_element(poi + l, poi + mid, poi + r + 1, cmpy);
+    int now = ++KDcnt;
+    tr[now].mx = tr[now].mn = tr[now].point = poi[mid];
+    tr[now].lson = build(axis ^ 1, l, mid - 1);
+    tr[now].rson = build(axis ^ 1, mid + 1, r);
+    pushup(now);
+    return now;
+}
+```
+
+
 
 ## 主席树
 
@@ -1527,16 +1584,16 @@ struct Vector2 {
         c.y = x - b.y;
         return c;
     }
-    Vector2 rotate(const double& theta) const {
+    Vector2 rotate(const double& theta) const {  //逆时针
         Vector2 c;
         c.x = x * cos(theta) - y * sin(theta);
         c.y = y * cos(theta) + x * sin(theta);
         return c;
     }
-    friend T dot(const Vector2& a, const Vector2& b) {  //点乘
+    friend T dot(const Vector2<T>& a, const Vector2<T>& b) {  //点乘
         return a.x * b.x + a.y * b.y;
     }
-    friend T cross(const Vector2& a, const Vector2& b) {  //叉乘
+    friend T cross(const Vector2<T>& a, const Vector2<T>& b) {  //叉乘
         return a.x * b.y - a.y * b.x;
     }
 };
