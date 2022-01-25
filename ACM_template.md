@@ -1683,7 +1683,7 @@ $\sqrt{(x_1-x_2)^2+(y_1-y_2)}$
 
 ```c++
 double e_dis(Point a, Point b) {
-    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+    return sqrt((ll)(a.x - b.x) * (a.x - b.x) + (ll)(a.y - b.y) * (a.y - b.y));
 }
 ```
 
