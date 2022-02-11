@@ -1483,36 +1483,79 @@ void get_fac_inv(int range) {
 }
 ```
 
+## 阶乘
+
+### 求阶乘位数
+
+斯特林公式： ~~精度感人~~
+$$
+n! \approx \sqrt{2 \pi n}*(\frac{n}{e})^n \ \Longleftrightarrow \  \ln n! \approx \frac{1}{2}\ln2\pi n +n\ln \frac{n}{e}
+$$
+
+```c++
+double lg_fac(ll n) {
+    return 0.5 * log10(2 * PI * n) + n * (log10(n) - log10(exp(1)));
+}
+ll get_fac_len(ll n) {
+    if(n == 1)
+        return 1;
+    else
+        return lg_fac(n) + 1;
+}
+```
+
 ## 组合数学
 
-计算 $ A_n^m $ 和 $ C_n^m $ ( $ n $ 选 $m$ )，即 $n \choose m $，需要先进行阶乘逆元的计算
+计算 $ A_n^m $ 和 $ C_n^m $ ( $ n $ 选 $m$ )，即 $n \choose m $，
+
+### 逆元求法
 
 ```c++
 ll _A(int n, int m) {
 	if (m > n || m < 0)
 		return 0;
-	return fac[n] * fac_inv[n - m] % MOD;
+	return (ll)fac[n] * fac_inv[n - m] % MOD;
 }
 ll _C(int n, int m) {
 	if (m > n || m < 0)
 		return 0;
-	return fac[n] * fac_inv[n - m] % MOD * fac_inv[m] % MOD;
+	return (ll)fac[n] * fac_inv[n - m] % MOD * fac_inv[m] % MOD;
 }
 ```
 
-### Pascal公式
+### Lucas定理
+
+对较小质数$ p $ 取模，要求 $p \leq 10^6 $
+$$
+{n \choose m}={n\mod p \choose m\mod p} \cross {n/p \choose m/p}
+$$
+
+```c++
+ll lucas(int n,int m){
+    if(m>n)
+        return 0;
+    if(n<MOD)
+        return _C(n, m);
+    else
+        return lucas(n / MOD, m / MOD) * lucas(n % MOD, m % MOD) % MOD;
+}
+```
+
+### 计算性质
+
+#### Pascal公式
 
 $$
 {n \choose k}={n-1 \choose k}+{n-1 \choose k-1}
 $$
 
-### 置换式
+#### 置换式
 
 $$
 k {n \choose k}=n{n-1\choose k-1}
 $$
 
-### 范德蒙德卷积公式
+#### 范德蒙德卷积公式
 
 $$
 \sum_{k=0}^m{m_1 \choose k}{m_2 \choose n-k}={m_1+m_2 \choose n}
@@ -1682,7 +1725,7 @@ bool cmp(const Point& p1, const Point& p2) {
 $\sqrt{(x_1-x_2)^2+(y_1-y_2)}$
 
 ```c++
-double e_dis(Point a, Point b) {
+double e_dis(Point& a, Point& b) {
     return sqrt((ll)(a.x - b.x) * (a.x - b.x) + (ll)(a.y - b.y) * (a.y - b.y));
 }
 ```
@@ -1692,7 +1735,7 @@ double e_dis(Point a, Point b) {
 $\abs{x_1-x_2}+\abs{y_1-y_2}$
 
 ```c++
-int m_dis(Point a, Point b) {
+int m_dis(Point& a, Point& b) {
     return _abs(a.x - b.x) + _abs(a.y - b.y);
 }
 ```
@@ -1702,7 +1745,7 @@ int m_dis(Point a, Point b) {
 $max(\abs{x_1-x_2},\abs{y_1-y_2})$
 
 ```c++
-int c_dis(Point a, Point b) {
+int c_dis(Point& a, Point& b) {
     return _max(_abs(a.x - b.x), _abs(a.y - b.y));
 }
 ```
