@@ -1567,8 +1567,6 @@ $$
 
 $\{0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181,6765,10946,17711,28657,46368,75025,121393,196418,317811\}$
 
-资料：http://gradprogram.math.arizona.edu/~ura-reports/071/Campbell.Charles/Final.pdf
-
 #### 求法
 
 通项： $ \displaystyle F_n=\frac{1}{\sqrt5}*[(\frac{1+\sqrt5}{2})^n-(\frac{1-\sqrt5}{2})^n]$
@@ -3034,25 +3032,27 @@ void Min_Cost_Dinic() {
 
 ### 最大匹配
 
+匹配边数最多，每个点最多可匹配一次
+
 #### 最大流做法
 
 ![image-20211116210953397](C:\Users\12038\AppData\Roaming\Typora\typora-user-images\image-20211116210953397.png)
 
-建立超级源点和超级汇点，源点到x连流量wei
+建立超级源点和超级汇点，源点到x连流量为1，x到y每条正边流量为1，最后流入超级汇点的即为最大匹配数，枚举所有正边看剩余流量即可确定是否为选用的匹配边。
 
 ```c++
 for(int i = 1; i <= n; i++) {
-        addedge(0, i, 1);
-        addedge(i, 0, 0);
-    }
-    for(int i = 1; i <= m; i++) {
-        addedge(n + i, n + m + 1, 1);
-        addedge(n + m + 1, n + i, 0);
-    }
-    for(int i = 0; i < f; i++) {
-        cin >> u >> v;
-        addedge(u, n + v, 1);
-        addedge(n + v, u, 0);
-    }
+    addedge(0, i, 1);
+    addedge(i, 0, 0);
+}
+for(int i = 1; i <= m; i++) {
+    addedge(n + i, n + m + 1, 1);
+    addedge(n + m + 1, n + i, 0);
+}
+for(int i = 0; i < f; i++) {
+    cin >> u >> v;
+    addedge(u, n + v, 1);
+    addedge(n + v, u, 0);
+}
 ```
 
