@@ -837,14 +837,14 @@ void creat_ST() {
 	for (int i = 1; i <= n; i++)
 		ST[i][0] = a[i];
 	for (int i = 1; i < 25; i++) {
-		for (int j = 1; j <= n - (1 << (i - 1)) + 1; j++) {
-			ST[j][i] = _max(ST[j][i - 1], ST[j + (1 << (i - 1))][i -1]);//RMQ
+		for (int j = 1; j <= n - (1 << i) + 1; j++) {
+			ST[j][i] = _max(ST[j][i - 1], ST[j + (1 << (i - 1))][i -1]);
 		}
 	}
 }
 ll query_ST(int l, int r) {
 	int k = Log2[r - l + 1];
-	return gcd(ST[l][k], ST[r - (1 << k) + 1][k]);
+	return _max(ST[l][k], ST[r - (1 << k) + 1][k]);
 }
 ```
 
@@ -875,13 +875,15 @@ ll BIT_sum(int i) {
 
 注意在求RMQ时**不要使用三目运算符**！
 
+### 结构体版
+
 ```c++
 struct Tree {
 	int l, r;
 	ll val;
 	ll add;
 }tr[MX << 2];
-ll a[MX] = { 0 };
+ll num[MX] = { 0 };
 void pushdown(int i) {
 	if (tr[i].add == 0)
 		return;
@@ -901,7 +903,7 @@ void pushup(int i) {
 void build(int i, int l, int r) {
 	tr[i].l = l, tr[i].r = r, tr[i].val = tr[i].add = 0;
 	if (l == r) {
-		tr[i].val = a[l];
+		tr[i].val = num[l];
 		return;
 	}
     int mid = (l + r) >> 1;
@@ -931,6 +933,16 @@ void update(int i, int l, int r, ll val) {
 	pushup(i);
 }
 ```
+
+### 数组简化版
+
+只能对于长度为 $2^n$ 的数据，不足时需要补齐。单点修改RMQ有奇效
+
+```
+
+```
+
+
 
 ## KDTree - 静态
 
