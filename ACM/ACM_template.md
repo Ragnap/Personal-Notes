@@ -1201,6 +1201,73 @@ struct Mat {
 };
 ```
 
+### 分数
+
+```c++
+struct Frac {
+    int up, down;
+    Frac() {
+        up = 0, down = 1;
+    }
+    Frac(int val) {
+        up = val, down = 1;
+    }
+    Frac(int up, int down) {
+        up = up, down = down;
+        clear();
+    }
+    bool legal() {
+        return down == 0;
+    }
+    void clear() {
+        int _gcd = gcd(up, down);
+        up /= _gcd, down /= _gcd;
+    }
+    double get_double() {
+        return (double)up / down;
+    }
+    Frac operator+(const Frac x) const {
+        Frac c;
+        c.up = up * x.down + down * x.up;
+        c.down = down * x.down;
+        c.clear();
+        return c;
+    }
+    Frac operator-(const Frac x) const {
+        Frac c;
+        c.up = up * x.down - down * x.up;
+        c.down = down * x.down;
+        c.clear();
+        return c;
+    }
+    Frac operator*(const Frac x) const {
+        Frac c;
+        c.up = up * x.up;
+        c.down = down * x.down;
+        c.clear();
+        return c;
+    }
+    ll operator%(const int x) const {  // x需为质数
+        ll _gcd = gcd(down, x);
+        if(_gcd != 1)  //不存在
+            return -1;
+        return (ll)up * _pow(down, x - 2) % x;
+    }
+    bool operator==(const Frac x) const {
+        return up == x.up && down == x.down;
+    }
+    friend ostream& operator<<(ostream& out, const Frac& f) {
+        if(f.up == 0)
+            cout << 0;
+        else if(f.up == 1)
+            cout << f.up;
+        else
+            cout << f.up << '/' << f.down;
+        return out;
+    }
+};
+```
+
 
 
 ## 快速幂
@@ -1348,7 +1415,7 @@ void EularSieve(int range) {
 
 ### 质因数分解
 
-p[i]:质因数表 , pcnt[i]:对应质因数的次数
+`p[i]`:质因数表 , `pcnt[i]`:对应质因数的次数
 
 ```c++
 int p[MX] = { 0 }, pcnt[MX] = { 0 };
@@ -1463,7 +1530,7 @@ void get_inv(int range) {
 
 #### 任意 $n$ 个数的逆元
 
-a[i]:原数组下标从 1 开始,    s[i]:前缀积,    s_inv[i]:前缀积的逆元
+`a[i]`:原数组,下标从 1 开始,    `s[i]`:前缀积,    `s_inv[i]`:前缀积的逆元
 
 ```c++
 int inv[MX] = { 0 }, s_inv[MX] = { 0 };
@@ -1608,6 +1675,48 @@ $\{1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 26744
 #### 应用
 
 二叉树的方案数，栈的出栈顺序种数， $n$对括号的匹配方式
+
+
+
+## 常用不等式
+
+### 均值不等式
+
+$$
+H_n \le G_n \le A_n \le Q_n \ ,\  \mbox{当且仅当各元素相等时取等}
+$$
+
+$$
+\displaystyle
+&H_n&=&\frac{n}{\sum_{i=1}^{n}\frac{1}{x_i}} &=&\frac{1}{\frac{1}{x_1}+\frac{1}{x_2}+\dots+\frac{1}{x_n}}\\
+&G_n&=&\sqrt[n]{\prod_{i=1}^{n}x_i} &=&\sqrt[n]{x_1x_2\dots x_n} \\
+&A_n&=&\frac{\sum_{i=1}^{n}x_i}{n} &=&\frac{x_1+x_2+\dots+x_n}{n}\\
+&Q_n&=&\sqrt\frac{\sum_{i=1}^{n}x_i^2}{n} &=&\sqrt\frac{x_1^2+x_2^2+\dots+x_n^2}{n}\\
+$$
+
+
+
+#### 二元均值不等式
+
+$$
+\frac{2}{\frac1{a}+\frac1{b}}\le\sqrt{ab}\le\frac{a+b}{2}\le\sqrt{\frac{a^2+b^2}{2}}
+$$
+
+### 柯西不等式
+
+$$
+
+$$
+
+## 应用专题
+
+### 整数分拆问题
+
+指将一个正整数表示为若干个正整数的和，其中主要讨论无序分拆的问题，即不考虑求和顺序（将 $3=1+2$ 与 $3=2+1$ 视为同种分拆方式）
+
+#### 动态规划做法
+
+`dp[i]` 表示在
 
 # 计算几何
 
@@ -1937,7 +2046,7 @@ int Manacher(string s) {
 
 ### $0 1$ 背包
 
-$dp[j]=\max(dp[j],\ dp[j-w[i]]+v[i])$ , 其中 $dp[i]$ 表示背包容量为 $i$ 时能取到的最大价值
+`dp[j]=max(dp[j],dp[j-w[i]]+v[i])` , 其中` dp[i] `表示背包容量为 $i$ 时能取到的最大价值
 
 ```c++
 for(int i = 0; i < n; i++) {
@@ -1949,14 +2058,14 @@ for(int i = 0; i < n; i++) {
 
 ### 完全背包 / 多重背包
 
-$dp[j]=\max(dp[j],\ dp[j-w[i]*k]+v[i]*k)$ , 其中 $dp[j]$ 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
+`dp[j]=max(dp[j],dp[j-w[i]*k]+v[i]*k)` , 其中 `dp[j]` 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
 
 ```c++
 for(int i = 0; i < n; i++) {
     int have = num[i]; //物品i的总数量
     for(int k = 1; have; k <<= 1) {
         k = _min(have, k);
-        for(int j = W; j >= c[i] * k; j--) {
+        for(int j = W; j >= w[i] * k; j--) {
             dp[j] = _max(dp[j], dp[j - w[i] * k] + v[i] * k);
         }
         have -= k;
@@ -1968,18 +2077,18 @@ for(int i = 0; i < n; i++) {
 
 $w_i$ 很大但 $\sum v_i$ 很小时可以用价值作为进行转移的变量，下面给出01背包对应做法:
 
-$dp[j]=\min(dp[j],\ dp[j-v[i]]+w[i])$ , 其中 $dp[i]$ 表示当取得价值为 $i$ 时背包的最小容量
+`dp[j]=min(dp[j], dp[j-v[i]]+w[i])` , 其中 `dp[i]` 表示当取得价值为 $i$ 时背包的最小容量
 
 ```c++
 dp[0] = 0;
-for(int i = 1; i < MX; i++)
+for(int i = 1; i <= MX; i++)
     dp[i] = ll_INF;
 for(int i = 0; i < n; i++) {
-    for(int j = MX - 1; j >= v[i]; j--) {//mx为总价值
+    for(int j = MX; j >= v[i]; j--) {//mx为总价值
         dp[j] = _min(dp[j], dp[j - v[i]] + w[i]);
     }
 }
-for(int i = MX - 1; i >= 0; i--) {
+for(int i = MX; i >= 0; i--) {
     if(dp[i] <= W) {
         ans=i;
         break;
@@ -2066,11 +2175,11 @@ void huge_bag() {
 }
 ```
 
-
-
 ### 常见优化
 
 当费用相同时，只需保留价值最高的；当价值一定时，只需保留费用最低的；更一般的，对于两件物品 $i,j$ ，若$v_i \geq v_j$ 且  $w_i \leq w_j$ ，只需保留物品 $i$ 。
+
+
 
 # 图论
 
@@ -2221,7 +2330,7 @@ int DFS_SPFA(int u, int fa) {
 
 #### 差分约束
 
-$addedge(u,v,val)$ 在使用最短路(找最小上界)时表示 $v-u \leq val$  ，使用最长路(找最大下界)时表示 $v-u \geq val$ 。以最短路（找最小上界）为例,常用逻辑关系转换：( $u,v \geq 1$ ; $0$ 号节点为超级原点)
+`addedge(u,v,val)` 在使用最短路(找最小上界)时表示 $v-u \leq val$  ，使用最长路(找最大下界)时表示 $v-u \geq val$ 。以最短路（找最小上界）为例,常用逻辑关系转换：( $u,v \geq 1$ ; $0$ 号节点为超级原点)
 
 | **文字表达** |     **加边方式**     |  **文字表达**   |       **加边方式**       |
 | :----------: | :------------------: | :-------------: | :----------------------: |
@@ -2443,7 +2552,7 @@ void tarjan(int u, int fa, int root) {
 
 ### 2-SAT
 
-$addedge(u,v)$ 表示选取 $u$ 后必选取 $v$ ，常用逻辑关系转换：
+`addedge(u,v)` 表示选取 $u$ 后必选取 $v$ ，常用逻辑关系转换：
 
 |     文字表达     |                  加边方式                  |  文字表达  | 加边方式  |
 | :--------------: | :----------------------------------------: | :--------: | :-------: |
@@ -2853,191 +2962,269 @@ ll line_sum(int u, int v) {
 
 ## 网络流
 
-请注意初始条件下 **cnt=1**
-
 ### 最大流
-
-建边时反向边的流量取0
 
 #### Dinic
 
 ```c++
-int dep[MX], nowe[MX], st, ed;
-queue<int> q;
-bool BFS() {
-    for(int i = 0; i <= n; i++)
-        dep[i] = 0;
-    dep[st] = 1;
-    q.push(st);
-    while(!q.empty()) {
-        int u = q.front();
-        q.pop();
-        for(int i = head[u]; i; i = e[i]._next) {
+class Network_FLow {
+public:
+    int N, S, T;
+    void addFlowEdge(int u, int v, ll cap) {
+        addedge(u, v, cap);
+        addedge(v, u, 0);
+    }
+    void Init() {
+        for(int i = 0; i <= N; i++)
+            head[i] = nowe[i] = 0;
+        cnt = 1;
+    }
+    ll Dinic() {
+        ll nowflow = 0, maxflow = 0;
+        while(BFS())
+            while(nowflow = DFS(S, ll_INF))
+                maxflow += nowflow;
+        return maxflow;
+    }
+
+private:
+    struct Node {
+        ll cap;
+        int v;
+        int _next;
+    } e[MX << 1];
+    int head[MX], cnt = 0;
+    void addedge(int u, int v, ll cap) {
+        e[++cnt].v = v;
+        e[cnt].cap = cap;
+        e[cnt]._next = head[u];
+        head[u] = cnt;
+    }
+    int dep[MX], nowe[MX];
+    bool BFS() {
+        for(int i = 0; i <= N; i++)
+            dep[i] = 0;
+        dep[S] = 1;
+        queue<int> q;
+        q.push(S);
+        while(!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for(int i = head[u]; i; i = e[i]._next) {
+                int v = e[i].v;
+                if(e[i].cap > 0 && dep[v] == 0) {
+                    dep[v] = dep[u] + 1;
+                    q.push(v);
+                }
+            }
+        }
+        for(int i = 0; i <= N; i++)
+            nowe[i] = head[i];
+        return dep[T];
+    }
+    ll DFS(int u, ll flow) {
+        if(u == T)
+            return flow;
+        ll last = flow;
+        for(int i = nowe[u]; i; i = e[i]._next) {
+            nowe[u] = i;
             int v = e[i].v;
-            if(e[i].val > 0 && dep[v] == 0) {
-                dep[v] = dep[u] + 1;
-                q.push(v);
+            if(dep[v] == dep[u] + 1 && e[i].cap) {
+                ll nflow = DFS(v, _min(last, e[i].cap));
+                if(nflow > 0) {
+                    e[i].cap -= nflow, e[i ^ 1].cap += nflow;
+                    last -= nflow;
+                    if(last == 0)
+                        return flow;
+                }
             }
         }
+        if(last == flow)
+            dep[u] = 0;
+        return flow - last;
     }
-    for(int i = 0; i <= n; i++)
-        nowe[i] = head[i];
-    return dep[ed];
-}
-ll DFS(int u, ll flow) {
-    if(u == ed)
-        return flow;
-    ll last = flow;
-    for(int i = nowe[u]; i; i = e[i]._next) {
-        nowe[u] = i;
-        int v = e[i].v;
-        if(dep[v] == dep[u] + 1 && e[i].val) {
-            ll nflow = DFS(v, _min(last, e[i].val));
-            if(nflow > 0) {
-                e[i].val -= nflow, e[i ^ 1].val += nflow;
-                last -= nflow;
-                if(last == 0)
-                    return flow;
-            }
-        }
-    }
-    if(last == flow)
-        dep[u] = 0;
-    return flow - last;
-}
-ll Dinic() {
-    ll nowflow = 0, maxflow = 0;
-    while(BFS())
-        while(nowflow = DFS(st, ll_INF))
-            maxflow += nowflow;
-    return maxflow;
-}
+} flow;
 ```
 
 #### LSAP
 
 ```c++
-int dep[MX], gap[MX], nowe[MX], st, ed;
-queue<int> q;
-void BFS() {
-    for(int i = 0; i <= n; i++)
-        gap[i] = dep[i] = 0;
-    dep[ed] = 1;
-    gap[1]++;
-    q.push(ed);
-    while(!q.empty()) {
-        int u = q.front();
-        q.pop();
-        for(int i = head[u]; i; i = e[i]._next) {
-            int v = e[i].v;
-            if(dep[v] == 0) {
-                dep[v] = dep[u] + 1;
-                gap[dep[v]]++;
-                q.push(v);
-            }
+class Network_FLow {
+public:
+    int N, S, T;
+    void addFlowEdge(int u, int v, ll cap) {
+        addedge(u, v, cap);
+        addedge(v, u, 0);
+    }
+    void Init() {
+        for(int i = 0; i <= N; i++)
+            head[i] = nowe[i] = 0;
+        cnt = 1;
+    }
+    ll LSAP() {
+        ll maxflow = 0;
+        BFS();
+        while(dep[S] <= N) {
+            for(int i = 0; i <= N; i++)
+                nowe[i] = head[i];
+            maxflow += DFS(S, ll_INF);
         }
+        return maxflow;
     }
-}
-ll DFS(int u, ll flow) {
-    if(u == ed)
-        return flow;
-    ll last = flow;
-    for(int i = head[u]; i; i = e[i]._next) {
-        nowe[u] = i;
-        int v = e[i].v;
-        if(dep[v] == dep[u] - 1 && e[i].val) {
-            ll nflow = DFS(v, _min(last, e[i].val));
-            if(nflow > 0) {
-                e[i].val -= nflow, e[i ^ 1].val += nflow;
-                last -= nflow;
-                if(last == 0)
-                    return flow;
-            }
-        }
+
+private:
+    struct Node {
+        ll cap;
+        int v;
+        int _next;
+    } e[MX << 1];
+    int head[MX], cnt = 0;
+    void addedge(int u, int v, ll cap) {
+        e[++cnt].v = v;
+        e[cnt].cap = cap;
+        e[cnt]._next = head[u];
+        head[u] = cnt;
     }
-    gap[dep[u]]--;
-    if(gap[dep[u]] == 0)
-        dep[st] = n + 10;
-    gap[++dep[u]]++;
-    return flow - last;
-}
-ll lSAP() {
-    ll maxflow = 0;
-    BFS();
-    while(dep[st] <= n) {
-        for(int i = 0; i <= n; i++)
-            nowe[i] = head[i];
-        maxflow += DFS(st, ll_INF);
-    }
-    return maxflow;
-}
-```
-
-### 最小费用最大流
-
-建边时反向边的费用取相反数，流量取0
-
-#### Dinic
-
-```
-int nowe[MX], vis[MX], st, ed;
-ll dis[MX], mincost = 0;
-queue<int> q;
-bool SPFA() {
-    for (int i = 0; i <= n; i++)
-        vis[i] = 0, dis[i] = ll_INF;
-    vis[st] = 1;
-    dis[st] = 0;
-    q.push(st);
-    while (!q.empty()) {
-        int u = q.front();
-        q.pop();
-        vis[u] = 0;
-        for (int i = head[u]; i; i = e[i]._next) {
-            int v = e[i].v;
-            if (e[i].val > 0 && dis[v] > dis[u] + e[i].cost) {
-                dis[v] = dis[u] + e[i].cost;
-                if (vis[v] == 0) {
-                    vis[v] = 1;
+    int dep[MX], nowe[MX];
+    void BFS() {
+        for(int i = 0; i <= N; i++)
+            gap[i] = dep[i] = 0;
+        dep[T] = 1;
+        gap[1]++;
+        queue<int> q;
+        q.push(T);
+        while(!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for(int i = head[u]; i; i = e[i]._next) {
+                int v = e[i].v;
+                if(dep[v] == 0) {
+                    dep[v] = dep[u] + 1;
+                    gap[dep[v]]++;
                     q.push(v);
                 }
             }
         }
     }
-    for (int i = 0; i <= n; i++)
-        nowe[i] = head[i];
-    return dis[ed] != ll_INF;
-}
-ll DFS(int u, ll flow) {
-    vis[u] = 1;
-    if (u == ed)
-        return flow;
-    ll last = flow;
-    for (int i = nowe[u]; i; i = e[i]._next) {
-        nowe[u] = i;
-        int v = e[i].v;
-        if ((vis[v] == 0 || v == ed) && dis[v] == dis[u] + e[i].cost && e[i].val) {
-            ll nflow = DFS(v, _min(last, e[i].val));
-            if (nflow > 0) {
-                mincost += e[i].cost * nflow;
-                e[i].val -= nflow, e[i ^ 1].val += nflow;
-                last -= nflow;
-                if (last == 0)
-                    return flow;
+    ll DFS(int u, ll flow) {
+        if(u == T)
+            return flow;
+        ll last = flow;
+        for(int i = head[u]; i; i = e[i]._next) {
+            nowe[u] = i;
+            int v = e[i].v;
+            if(dep[v] == dep[u] - 1 && e[i].val) {
+                ll nflow = DFS(v, _min(last, e[i].val));
+                if(nflow > 0) {
+                    e[i].val -= nflow, e[i ^ 1].val += nflow;
+                    last -= nflow;
+                    if(last == 0)
+                        return flow;
+                }
             }
         }
+        gap[dep[u]]--;
+        if(gap[dep[u]] == 0)
+            dep[S] = n + 10;
+        gap[++dep[u]]++;
+        return flow - last;
     }
-    if (last == flow)
-        dis[u] = ll_INF;
-    return flow - last;
-}
-void Min_Cost_Dinic() {
-    ll nowflow = 0, maxflow = 0;
-    while (SPFA())
-        while (nowflow = DFS(st, ll_INF))
-            maxflow += nowflow;
-    cout << maxflow << " " << mincost << endl;
-}
+} flow;
+```
+
+### 最小费用最大流
+
+#### Dinic
+
+```c++
+class Min_Cost_Flow {
+public:
+    int N, S, T;
+    void addFlowEdge(int u, int v, ll cap, ll cost) {
+        addedge(u, v, cap, cost);
+        addedge(v, u, 0, -cost);
+    }
+    void Init() {
+        for(int i = 0; i <= N; i++)
+            head[i] = nowe[i] = 0;
+        mincost = 0;
+        cnt = 1;
+    }
+    ll Min_Cost_Dinic() {
+        ll nowflow = 0, maxflow = 0;
+        mincost = 0;
+        while(SPFA())
+            while(nowflow = DFS(S, ll_INF))
+                maxflow += nowflow;
+        return mincost;
+    }
+
+private:
+    struct Flow_Edge {
+        ll cap, cost;
+        int v;
+        int _next;
+    } e[MX << 1];
+    int head[MX], nowe[MX], cnt;
+    int vis[MX];
+    ll dis[MX], mincost;
+    void addedge(int u, int v, ll cap, ll cost) {
+        e[++cnt].v = v;
+        e[cnt].cap = cap;
+        e[cnt].cost = cost;
+        e[cnt]._next = head[u];
+        head[u] = cnt;
+    }
+    bool SPFA() {
+        for(int i = 0; i <= N; i++)
+            vis[i] = 0, dis[i] = ll_INF;
+        vis[S] = 1;
+        dis[S] = 0;
+        queue<int> q;
+        q.push(S);
+        while(!q.empty()) {
+            int u = q.front();
+            q.pop();
+            vis[u] = 0;
+            for(int i = head[u]; i; i = e[i]._next) {
+                int v = e[i].v;
+                if(e[i].cap > 0 && dis[v] > dis[u] + e[i].cost) {
+                    dis[v] = dis[u] + e[i].cost;
+                    if(vis[v] == 0) {
+                        vis[v] = 1;
+                        q.push(v);
+                    }
+                }
+            }
+        }
+        for(int i = 0; i <= N; i++)
+            nowe[i] = head[i];
+        return dis[T] != ll_INF;
+    }
+    ll DFS(int u, ll flow) {
+        vis[u] = 1;
+        if(u == T)
+            return flow;
+        ll last = flow;
+        for(int i = nowe[u]; i; i = e[i]._next) {
+            nowe[u] = i;
+            int v = e[i].v;
+            if((vis[v] == 0 || v == T) && dis[v] == dis[u] + e[i].cost && e[i].cap) {
+                ll nflow = DFS(v, _min(last, e[i].cap));
+                if(nflow > 0) {
+                    mincost += e[i].cost * nflow;
+                    e[i].cap -= nflow, e[i ^ 1].cap += nflow;
+                    last -= nflow;
+                    if(last == 0)
+                        return flow;
+                }
+            }
+        }
+        if(last == flow)
+            dis[u] = ll_INF;
+        return flow - last;
+    }
+} flow;
 ```
 
 ## 二分图
