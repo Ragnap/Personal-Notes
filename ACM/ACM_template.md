@@ -15,38 +15,39 @@ const double PI = acos(-1.0);
 const int dy[8] = {-1, 0, 1, 0, 1, -1, 1, -1};
 const int dx[8] = {0, -1, 0, 1, 1, -1, -1, 1};
 #define R register
-#define _max(a, b) ((a) > (b) ? (a) : (b))
-#define _min(a, b) ((a) < (b) ? (a) : (b))
+#define _chmax(a, b) (a = max(a, (b)))
+#define _chmin(a, b) (a = min(a, (b)))
 #define _abs(a) ((a) > 0 ? (a) : -(a))
-#define _swap(a, b) ((a) ^= (b) ^= (a) ^= (b))
-#define _eql(x, y) (_abs((x) - (y)) < EPS)
-const int MOD = 1e9 + 7;
-const int MX = 1000010;
-ll _r() {
+
+inline int fcmp(double x) {
+    return ((fabs(x) < EPS) ? 0 : ((x < 0) ? -1 : 1));
+}
+inline ll _r() {
     ll x = 0, f = 1;
     char c = getchar();
-    while(c > '9' || c < '0') {
-        if(c == '-')
-            f = -1;
-        c = getchar();
-    }
-    while(c >= '0' && c <= '9')
-        x = (x << 3) + (x << 1) + (c ^ 48), c = getchar();
+    while (c > '9' || c < '0') { if (c == '-')f = -1; c = getchar(); }
+    while (c >= '0' && c <= '9')x = (x << 3) + (x << 1) + (c ^ 48), c = getchar();
     return f == -1 ? -x : x;
 }
+
+const int MOD = 1e9+7;
+const int MX = 1000010;
 void Init() {
+
 }
+
 void solve() {
+
 }
 int main() {
     std::ios::sync_with_stdio(false);
 #ifdef LOCAL
-    freopen("data.in", "r", stdin);
-    freopen("data.out", "w", stdout);
+    freopen("./Input_data/data.in", "r", stdin);
+    freopen("./Output_data/data.out", "w", stdout);
 #endif
     int t = 1;
-    // cin>> t;
-    while(t--) {
+    //cin>> t;
+    while (t--) {
         Init();
         solve();
     }
@@ -1720,9 +1721,9 @@ $$
 
 # 计算几何
 
-## 基本类
+## 二维点与向量
 
-### 二维向量
+### 基本类
 
 ```c++
 template<typename T>
@@ -1731,20 +1732,25 @@ struct Vector2 {
     Vector2() {
         x = y = 0;
     }
+    Vector2(T x, T b): x(x), y(y) {
+    }
     T get_len() {
-        return sqrt(x * x + y * y);
+        return sqrt((double)x * x + y * y);
     }
     Vector2 operator+(const Vector2& b) const {
-        Vector2 c;
-        c.x = x + b.x;
-        c.y = x + b.y;
-        return c;
+        return Vector2(x + b.x, x + b.y);
     }
     Vector2 operator-(const Vector2& b) const {
-        Vector2 c;
-        c.x = x - b.x;
-        c.y = x - b.y;
-        return c;
+        return Vector2(x - b.x, x - b.y);
+    }
+    Vector2 operator*(const double c) const {
+        return Vector2(x * c, y * c);
+    }
+    Vector2 operator/(const double c) const {
+        return Vector2(x / c, y / c);
+    }
+    bool operator==(const Vector2& b) const {
+        return fcmp(x - b.x) == 0 && fcmp(y - b.y) == 0;
     }
     Vector2 rotate(const double& theta) const {  //逆时针
         Vector2 c;
@@ -1752,20 +1758,29 @@ struct Vector2 {
         c.y = y * cos(theta) + x * sin(theta);
         return c;
     }
+    Vector2 rotate_inv90() const {  //逆时针90度
+        return Vector2(-y, x);
+    }
+    Vector2 rotate_clk90() const {  //顺时针90度
+        return Vector2(y, -x);
+    }
+    friend int quad(const Vector2<T>& p) {  //求象限
+        return ((p.y < 0) ? 1 : 3) + ((p.x < 0) ^ (p.y < 0));
+    }
     friend T dot(const Vector2<T>& a, const Vector2<T>& b) {  //点乘
-        return a.x * b.x + a.y * b.y;
+        return (ll)a.x * b.x + (ll)a.y * b.y;
     }
     friend T cross(const Vector2<T>& a, const Vector2<T>& b) {  //叉乘
-        return a.x * b.y - a.y * b.x;
+        return (ll)a.x * b.y - (ll)a.y * b.x;
     }
 };
 typedef Vector2<int> Point;
 typedef Vector2<double> Vec2;
 ```
 
-## 面积
+### 面积
 
-### 三角形面积
+#### 三角形面积
 
 ```c++
 double get_S(Vec2 a, Vec2 b) {
@@ -1773,7 +1788,7 @@ double get_S(Vec2 a, Vec2 b) {
 }
 ```
 
-### 多边形面积
+#### 多边形面积
 
 ```c++
 double get_S() {
@@ -1785,9 +1800,9 @@ double get_S() {
 }
 ```
 
-## 角度
+### 角度
 
-### 旋转
+#### 旋转
 
 计算 $\vec{v}=(x,y)$ 绕原点（起点）逆时针旋转 $\theta$ 后的向量
 
@@ -1800,11 +1815,11 @@ Vector2 rotate(Vector2& a, const double& theta) {
 }
 ```
 
-### 极角排序
+#### 极角排序
 
 逆时针排序向量或点，其中弧度比较常数较小，叉积比较精度较高
 
-#### 极角
+##### 极角
 
 计算 $\vec{v}=(x,y)$ 顺时针到 $x$ 轴正半轴方向转过的角度 $\theta -\pi$，值域为 $(-\pi,\pi\ ]$ 
 
@@ -1812,7 +1827,7 @@ Vector2 rotate(Vector2& a, const double& theta) {
 double theta = atan2(x, y);
 ```
 
-#### 弧度比较法
+##### 弧度比较法
 
 ```c++
 bool cmp(const Point& p1, const Point& p2) {
@@ -1820,7 +1835,7 @@ bool cmp(const Point& p1, const Point& p2) {
 }
 ```
 
-#### 叉积比较法
+##### 叉积比较法
 
 ```c++
 int quad(const Point& p) {  //求象限
@@ -1835,9 +1850,7 @@ bool cmp(const Point& p1, const Point& p2) {
 }
 ```
 
-## 距离
-
-### 类型
+### 距离
 
 #### 欧几里得距离 
 
@@ -1880,6 +1893,106 @@ int c_dis(Point& a, Point& b) {
 已知点集 $(x,y)$，求任意点对的**曼哈顿距离**: 可将所有点变化为 $(x+y,x-y)$后求新坐标系下对应点对的**切比雪夫距离**；
 
 已知点集 $(x,y)$，求任意点对的**切比雪夫距离**: 可将所有点变化为 $\displaystyle (\frac{x+y}{2},\frac{x-y}{2})$后求新坐标系下对应点对的**曼哈顿距离**；
+
+## 二维直线
+
+### 基本类
+
+#### 一般式
+
+```c++
+struct Line {
+    // Ax+By+C=0
+    ll A, B, C;
+    void format() {
+        if(A < 0 || (A == 0 && B < 0))
+            A = -A, B = -B, C = -C;
+        ll _gcd = gcd(gcd(abs(A), abs(B)), abs(C));
+        A /= _gcd, B /= _gcd, C /= _gcd;
+    }
+    void set(Point a, Point b) {
+        A = b.y - a.y;
+        B = a.x - b.x;
+        C = (ll)b.x * a.y - a.x * b.y;
+        format();
+    }
+    bool operator==(const Line& a) const {
+        return A == a.A && B == a.B && C == a.C;
+    }
+    bool operator<(const Line& a) const {
+        if(A != a.A)
+            return A < a.A;
+        else if(B != a.B)
+            return B < a.B;
+        return C < a.C;
+    }
+    friend ostream& operator<<(ostream& out, const Line& x) {
+        out << "L:" << x.A << "x";
+        if(x.B >= 0)
+            out << "+";
+        out << x.B << "y";
+        if(x.C >= 0)
+            out << "+";
+        out << x.C << "=0" << endl;
+        return out;
+    }
+} line[MX];
+```
+
+#### 点法式
+
+```c++
+//点点式
+struct Line {
+    Vec2 s, t;
+    Vec2 normal;  //法向量
+    Line() {
+    }
+    Line(const Point s, const Point t): s(s.x, s.y), t(t.x, t.y) {
+        update_normal();
+    }
+    Line(const Vec2 s, const Vec2 t): s(s), t(t) {
+        update_normal();
+    }
+    void set(const Point a, const Point b) {
+        s.x = a.x, s.y = a.y, t.x = b.x, t.y = b.y;
+        update_normal();
+    }
+    void set(const Vec2 a, const Vec2 b) {
+        s.x = a.x, s.y = a.y, t.x = b.x, t.y = b.y;
+        update_normal();
+    }
+    void update_normal() {
+        normal.x = t.x - s.x;
+        normal.y = t.y - s.y;
+        ll _gcd = __gcd((ll)abs(normal.x), (ll)abs(normal.y));
+        normal.x /= _gcd, normal.y /= _gcd;
+        if(fcmp(normal.x) == -1) {
+            swap(normal.x, normal.y);
+            swap(s, t);
+        }
+    }
+    bool operator==(const Line& a) const {
+        return same((*this), a);
+    }
+    bool operator<(const Line& a) const {
+        if(normal != a.normal)
+            return normal < a.normal;
+        else if(s != a.s)
+            return s < a.s;
+        return t < a.t;
+    }
+    friend bool vertical(const Line& a, const Line& b) {
+        return fcmp(dot(a.normal, b.normal)) == 0;
+    }
+    friend bool parallel(const Line& a, const Line& b) {
+        return fcmp(cross(a.normal, b.normal)) == 0;
+    }
+    friend bool same(const Line& a, const Line& b) {
+        return parallel(a, b) && parallel(Line(a.s, b.t), Line(b.s, a.t));
+    }
+};
+```
 
 
 
@@ -2549,6 +2662,10 @@ void tarjan(int u, int fa, int root) {
 	}
 }
 ```
+
+#### 性质
+
+​	割点
 
 ### 2-SAT
 
