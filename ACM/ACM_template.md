@@ -19,7 +19,7 @@ const int dx[8] = {0, -1, 0, 1, 1, -1, -1, 1};
 #define _chmin(a, b) (a = min(a, (b)))
 #define _abs(a) ((a) > 0 ? (a) : -(a))
 
-inline int fcmp(double x) {
+inline int fsign(double x) {
     return ((fabs(x) < EPS) ? 0 : ((x < 0) ? -1 : 1));
 }
 inline ll _r() {
@@ -69,7 +69,33 @@ std::ios::sync_with_stdio(false);
 #pragma comment(linker, "/STACK:10240000,10240000")
 ```
 
+## Cout格式化输出
 
+### 全局方式
+
+#### 设置有效数位
+
+​	有效数字的函数不会保留没用的0有效位
+
+```c++
+cout.precision(2);
+```
+
+#### 设置有效数位显示后缀零
+
+```
+cout.setf(ios::showpoint);
+cout.precision(4);
+```
+
+#### 设置小数位数
+
+```c++
+cout.flags(ios::fixed);
+cout.precision(2);
+```
+
+#### 
 
 # STL
 
@@ -1169,12 +1195,12 @@ struct Mat {
                     return 0;
         return 1;
     }
-    bool is_unit() {
+ 	bool is_unit() {
         for(R int i = 0; i < MAT_SIZ; i++) {
             if(num[i][i] != 1)
                 return 0;
             for(R int j = i + 1; j < MAT_SIZ; j++)
-                if(num[i][j] != 0 || num[j][i != 0])
+                if(num[i][j] != 0 || num[j][i] != 0)
                     return 0;
         }
         return 1;
@@ -1553,11 +1579,12 @@ void get_set_inv(int range) {
 也可以顺势计算普通逆元
 
 ```c++
+ll inv[MX],fac_inv[MX];
 void get_fac_inv(int range) {
 	fac[0] = 1;
 	for (int i = 1; i <= range; i++)
 		fac[i] = (fac[i - 1] * i) % MOD;
-	fac_inv[range] = _pow(fac[range], MOD - 2, MOD);
+	fac_inv[range] = _pow(fac[range], MOD - 2);
 	for (int i = range - 1; i >= 0; i--)
 		fac_inv[i] = (fac_inv[i + 1] * (i + 1)) % MOD;
 }
@@ -1726,56 +1753,98 @@ $$
 ### 基本类
 
 ```c++
-template<typename T>
-struct Vector2 {
-    T x, y;
-    Vector2() {
+#define Vector2D Point
+struct Point {
+    double x, y;
+    Point() {
         x = y = 0;
     }
-    Vector2(T x, T b): x(x), y(y) {
+    Point(double X, double Y) {
+        x = X, y = Y;
     }
-    T get_len() {
+    double get_len() {
         return sqrt((double)x * x + y * y);
     }
-    Vector2 operator+(const Vector2& b) const {
-        return Vector2(x + b.x, x + b.y);
+    Point operator+(const Point& b) const {
+        return Point(x + b.x, y + b.y);
     }
-    Vector2 operator-(const Vector2& b) const {
-        return Vector2(x - b.x, x - b.y);
+    Point operator-(const Point& b) const {
+        return Point(x - b.x, y - b.y);
     }
-    Vector2 operator*(const double c) const {
-        return Vector2(x * c, y * c);
+    Point operator*(const double c) const {
+        return Point(x * c, y * c);
     }
-    Vector2 operator/(const double c) const {
-        return Vector2(x / c, y / c);
+    Point operator/(const double c) const {
+        return Point(x / c, y / c);
     }
-    bool operator==(const Vector2& b) const {
-        return fcmp(x - b.x) == 0 && fcmp(y - b.y) == 0;
+    bool operator==(const Point& b) const {
+        return fsign(x - b.x) == 0 && fsign(y - b.y) == 0;
     }
-    Vector2 rotate(const double& theta) const {  //逆时针
-        Vector2 c;
+    bool operator!=(const Point& b) const {
+        return fsign(x - b.x) != 0 || fsign(y - b.y) != 0;
+    }
+    bool operator<(const Point& b) const {
+        if(fsign(x - b.x) == 0)
+            return fsign(y - b.y) == -1;
+        return fsign(x - b.x) == -1;
+    }
+    //逆时针旋转theta角
+    Vector2D rotate(const double& theta) const {
+        Point c;
         c.x = x * cos(theta) - y * sin(theta);
         c.y = y * cos(theta) + x * sin(theta);
         return c;
     }
-    Vector2 rotate_inv90() const {  //逆时针90度
-        return Vector2(-y, x);
+    //逆时针90度
+    Vector2D rotate_inv90() const {
+        return Vector2D(-y, x);
     }
-    Vector2 rotate_clk90() const {  //顺时针90度
-        return Vector2(y, -x);
+    //顺时针90度
+    Vector2D rotate_clk90() const {
+        return Vector2D(y, -x);
     }
-    friend int quad(const Vector2<T>& p) {  //求象限
+    // 取模的平方
+    double norm_square() const {
+        return x * x + y * y;
+    }
+    // 取模
+    double norm_sqrt() const {
+        return sqrt(x * x + y * y);
+    }
+    //求象限
+    friend int quad(const Point& p) {
         return ((p.y < 0) ? 1 : 3) + ((p.x < 0) ^ (p.y < 0));
     }
-    friend T dot(const Vector2<T>& a, const Vector2<T>& b) {  //点乘
-        return (ll)a.x * b.x + (ll)a.y * b.y;
+    //点乘
+    friend double dot(const Vector2D& a, const Vector2D& b) {
+        return a.x * b.x + a.y * b.y;
     }
-    friend T cross(const Vector2<T>& a, const Vector2<T>& b) {  //叉乘
-        return (ll)a.x * b.y - (ll)a.y * b.x;
+    //叉乘
+    friend double cross(const Vector2D& a, const Vector2D& b) {
+        return a.x * b.y - a.y * b.x;
+    }
+    //求向量夹角cos
+    friend double included_angel(const Vector2D& a, const Vector2D& b) {
+        return (dot(a, b)) / (a.norm_sqrt() * b.norm_sqrt());
+    }
+    //判定两向量关系,<0逆反
+    friend int vectors_postion(const Vector2D& a, const Vector2D& b) {
+        if(fsign(cross(a, b)) == -1)  // a在b的逆时针方向（左侧）
+            return -2;
+        if(fsign(cross(a, b)) == 1)  // a在b的顺时针方向（右侧）
+            return 2;
+        if(fsign(dot(a, b)) == -1)  // ab反向
+            return -1;
+        if(fsign(a.norm_square() - b.norm_square()) == -1)  // ab同向,且b长于a
+            return 1;
+        else  // ab同向,且b短于a,b在a上
+            return 0;
+    }
+    //判定三点关系(a->b,a->c)
+    friend int points_postion(const Point& a, const Point& b, const Point& c) {
+        return vectors_postion(b - a, c - a);
     }
 };
-typedef Vector2<int> Point;
-typedef Vector2<double> Vec2;
 ```
 
 ### 面积
@@ -1783,20 +1852,8 @@ typedef Vector2<double> Vec2;
 #### 三角形面积
 
 ```c++
-double get_S(Vec2 a, Vec2 b) {
+double get_S(Point a, Point b) {
 	return _abs(cross(a, b)) / 2;
-}
-```
-
-#### 多边形面积
-
-```c++
-double get_S() {
-	double res = cross(poi[0], poi[n - 1]);
-	for (int i = 1; i < n; i++) {
-		res += cross(poi[i], poi[i - 1]);
-	}
-	return _abs(res) / 2;
 }
 ```
 
@@ -1894,6 +1951,10 @@ int c_dis(Point& a, Point& b) {
 
 已知点集 $(x,y)$，求任意点对的**切比雪夫距离**: 可将所有点变化为 $\displaystyle (\frac{x+y}{2},\frac{x-y}{2})$后求新坐标系下对应点对的**曼哈顿距离**；
 
+
+
+
+
 ## 二维直线
 
 ### 基本类
@@ -1901,95 +1962,235 @@ int c_dis(Point& a, Point& b) {
 #### 一般式
 
 ```c++
+//点点式直线
 struct Line {
-    // Ax+By+C=0
-    ll A, B, C;
-    void format() {
-        if(A < 0 || (A == 0 && B < 0))
-            A = -A, B = -B, C = -C;
-        ll _gcd = gcd(gcd(abs(A), abs(B)), abs(C));
-        A /= _gcd, B /= _gcd, C /= _gcd;
-    }
-    void set(Point a, Point b) {
-        A = b.y - a.y;
-        B = a.x - b.x;
-        C = (ll)b.x * a.y - a.x * b.y;
-        format();
-    }
-    bool operator==(const Line& a) const {
-        return A == a.A && B == a.B && C == a.C;
-    }
-    bool operator<(const Line& a) const {
-        if(A != a.A)
-            return A < a.A;
-        else if(B != a.B)
-            return B < a.B;
-        return C < a.C;
-    }
-    friend ostream& operator<<(ostream& out, const Line& x) {
-        out << "L:" << x.A << "x";
-        if(x.B >= 0)
-            out << "+";
-        out << x.B << "y";
-        if(x.C >= 0)
-            out << "+";
-        out << x.C << "=0" << endl;
-        return out;
-    }
-} line[MX];
-```
-
-#### 点法式
-
-```c++
-//点点式
-struct Line {
-    Vec2 s, t;
-    Vec2 normal;  //法向量
+    Point s, t;
+    Vector2D normal;  //方向向量
     Line() {
     }
-    Line(const Point s, const Point t): s(s.x, s.y), t(t.x, t.y) {
-        update_normal();
-    }
-    Line(const Vec2 s, const Vec2 t): s(s), t(t) {
-        update_normal();
+    Line(const Point st, const Point ed) {
+        set(st, ed);
     }
     void set(const Point a, const Point b) {
-        s.x = a.x, s.y = a.y, t.x = b.x, t.y = b.y;
-        update_normal();
-    }
-    void set(const Vec2 a, const Vec2 b) {
-        s.x = a.x, s.y = a.y, t.x = b.x, t.y = b.y;
+        s = a, t = b;
         update_normal();
     }
     void update_normal() {
-        normal.x = t.x - s.x;
-        normal.y = t.y - s.y;
-        ll _gcd = __gcd((ll)abs(normal.x), (ll)abs(normal.y));
-        normal.x /= _gcd, normal.y /= _gcd;
-        if(fcmp(normal.x) == -1) {
-            swap(normal.x, normal.y);
-            swap(s, t);
-        }
+        normal = t - s;
     }
-    bool operator==(const Line& a) const {
+    bool operator==(Line a) const {
         return same((*this), a);
     }
-    bool operator<(const Line& a) const {
+    bool operator<(Line a) const {
         if(normal != a.normal)
             return normal < a.normal;
         else if(s != a.s)
             return s < a.s;
         return t < a.t;
     }
-    friend bool vertical(const Line& a, const Line& b) {
-        return fcmp(dot(a.normal, b.normal)) == 0;
+    friend bool is_vertical(const Line& a, const Line& b) {
+        return fsign(dot(a.normal, b.normal)) == 0;
     }
-    friend bool parallel(const Line& a, const Line& b) {
-        return fcmp(cross(a.normal, b.normal)) == 0;
+    friend bool is_parallel(const Line& a, const Line& b) {
+        return fsign(cross(a.normal, b.normal)) == 0;
     }
     friend bool same(const Line& a, const Line& b) {
-        return parallel(a, b) && parallel(Line(a.s, b.t), Line(b.s, a.t));
+        return is_parallel(a, b) && is_parallel(Line(a.s, b.t), Line(b.s, a.t));
+    }
+    // 求p在直线line上的投影(垂点)
+    friend Point projection(Line& line, Point& p) {
+        double num_t = dot(p - line.s, line.normal) / line.normal.norm_square();
+        return line.s + line.normal * num_t;
+    }
+    // 判定线段是否相交
+    friend bool is_corss_seg(Line& a, Line& b) {
+        if(points_postion(a.s, a.t, b.s) * points_postion(a.s, a.t, b.t) > 0)
+            return 0;
+        if(points_postion(b.s, b.t, a.s) * points_postion(b.s, b.t, a.t) > 0)
+            return 0;
+        return 1;
+    }
+    // 求线段相交点
+    friend Point get_corss_point(Line& a, Line& b) {
+        double d1 = fabs(cross(b.normal, a.s - b.s));
+        double d2 = fabs(cross(b.normal, a.t - b.t));
+        double num_t = d1 / (d1 + d2);
+        return a.s + a.normal * num_t;
+    }
+    // 求点到直线距离
+    friend double get_dis_point_line(Line& l, Point& p) {
+        return fabs(cross(l.normal, p - l.s) / l.normal.norm_sqrt());
+    }
+    // 求点到线段距离
+    friend double get_dis_point_seg(Line& l, Point& p) {
+        if(fsign(dot(l.normal, p - l.s)) < 0)
+            return (p - l.s).norm_sqrt();
+        if(fsign(dot(l.normal, p - l.t)) > 0)
+            return (p - l.t).norm_sqrt();
+        return get_dis_point_line(l, p);
+    }
+    // 求直线之间的距离
+    friend double get_dis_lines(Line& a, Line& b) {
+        if(is_corss_seg(a, b))
+            return 0;
+        return fabs(get_dis_point_line(a, b.t));
+    }
+    // 求线段之间的距离
+    friend double get_dis_segs(Line& a, Line& b) {
+        if(is_corss_seg(a, b))
+            return 0;
+        double dis1 = min(get_dis_point_seg(a, b.s), get_dis_point_seg(a, b.t));
+        double dis2 = min(get_dis_point_seg(b, a.s), get_dis_point_seg(b, a.t));
+        return min(dis1, dis2);
+    }
+};
+```
+
+#### 点点式
+
+```c++
+//点点式直线
+struct Line {
+    Vector2 s, t;
+    Vector2 normal;  //方向向量
+    Line() {
+    }
+    Line(const Point st, const Point ed) {
+        set(st, ed);
+    }
+    Line(const Vector2 st, const Vector2 ed) {
+        set(st, ed);
+    }
+    void set(const Point a, const Point b) {
+        s.x = a.x, s.y = a.y, t.x = b.x, t.y = b.y;
+        update_normal();
+    }
+    void set(const Vector2 a, const Vector2 b) {
+        s = a, t = b;
+        update_normal();
+    }
+    void update_normal() {
+        normal = t - s;
+    }
+    bool operator==(Line a) const {
+        return same((*this), a);
+    }
+    bool operator<(Line a) const {
+        if(normal != a.normal)
+            return normal < a.normal;
+        else if(s != a.s)
+            return s < a.s;
+        return t < a.t;
+    }
+    friend bool is_vertical(const Line& a, const Line& b) {
+        return fsign(dot(a.normal, b.normal)) == 0;
+    }
+    friend bool is_parallel(const Line& a, const Line& b) {
+        return fsign(cross(a.normal, b.normal)) == 0;
+    }
+    friend bool same(const Line& a, const Line& b) {
+        return is_parallel(a, b) && is_parallel(Line(a.s, b.t), Line(b.s, a.t));
+    }
+    // 求p在直线line上的投影(垂点)
+    friend Vector2 projection(Line& line, Vector2& p) {
+        double num_t = dot(p - line.s, line.normal) / line.normal.norm_square();
+        return line.s + line.normal * num_t;
+    }
+    // 判定线段是否相交
+    friend bool is_corss_seg(Line& a, Line& b) {
+        if(point_postion(a.s, a.t, b.s) * point_postion(a.s, a.t, b.t) > 0)
+            return 0;
+        if(point_postion(b.s, b.t, a.s) * point_postion(b.s, b.t, a.t) > 0)
+            return 0;
+        return 1;
+    }
+    // 求线段相交点
+    friend Vector2 get_corss_point(Line& a, Line& b) {
+        double d1 = fabs(cross(b.normal, a.s - b.s));
+        double d2 = fabs(cross(b.normal, a.t - b.t));
+        double num_t = d1 / (d1 + d2);
+        return a.s + a.normal * num_t;
+    }
+    // 求点到直线距离
+    friend double get_dis_point_line(Line& l, Vector2& p) {
+        return fabs(cross(l.normal, p - l.s) / l.normal.norm_sqrt());
+    }
+    // 求点到线段距离
+    friend double get_dis_point_seg(Line& l, Vector2& p) {
+        if(fsign(dot(l.normal, p - l.s)) < 0)
+            return (p - l.s).norm_sqrt();
+        if(fsign(dot(l.normal, p - l.t)) > 0)
+            return (p - l.t).norm_sqrt();
+        return get_dis_point_line(l, p);
+    }
+    // 求直线之间的距离
+    friend double get_dis_lines(Line& a, Line& b) {
+        if(is_corss_seg(a, b))
+            return 0;
+        return fabs(get_dis_point_line(a, b.t));
+    }
+    // 求线段之间的距离
+    friend double get_dis_segs(Line& a, Line& b) {
+        if(is_corss_seg(a, b))
+            return 0;
+        double dis1 = min(get_dis_point_seg(a, b.s), get_dis_point_seg(a, b.t));
+        double dis2 = min(get_dis_point_seg(b, a.s), get_dis_point_seg(b, a.t));
+        return min(dis1, dis2);
+    }
+};
+```
+
+## 多边形
+
+### 基本类
+
+```c++
+struct Polygon {
+    vector<Point> poi;
+    int point_n;
+    void add_point(Point p) {
+        poi.push_back(p);
+        point_n++;
+    }
+    void add_point(double x, double y) {
+        poi.push_back(Point(x, y));
+        point_n++;
+    }
+    void clear() {
+        poi.clear();
+        point_n = 0;
+    }
+    //求多边形面积
+    double get_S() {
+        double res = cross(poi[0], poi[point_n - 1]);
+        for(int i = 1; i < point_n; i++) {
+            res += cross(poi[i], poi[i - 1]);
+        }
+        return fabs(res) / 2;
+    }
+    //判定是否为凸包
+    bool is_convex() {
+        for(int i = 0; i < point_n; i++) {
+            if(points_postion(poi[i], poi[(i + 1) % point_n], poi[(i + 2) % point_n]) == -2)
+                return 0;
+        }
+        return 1;
+    }
+    //判定点与凸包关系,点在凸包里:2,点在凸包边上:1,点在凸包外:0
+    friend int polygon_point_position(Polygon& poly, Point& p) {
+        bool x = false;
+        poly.poi.push_back(poly.poi[0]);
+        for(int i = 0; i < poly.point_n; i++) {
+            Point a = poly.poi[i] - p, b = poly.poi[i + 1] - p;
+            if(fsign(abs(cross(a, b))) == 0 && fsign(dot(a, b)) < 1)
+                return 1;
+            if(fsign(a.y - b.y) > 0)
+                swap(a, b);
+            if(fsign(a.y) < 1 && fsign(b.y) > 0 && fsign(cross(a, b)) > 0)
+                x = !x;
+        }
+        poly.poi.pop_back();
+        return (x ? 2 : 0);
     }
 };
 ```
