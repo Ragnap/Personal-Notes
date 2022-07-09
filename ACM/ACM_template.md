@@ -1,4 +1,4 @@
-# 基本框架
+基本框架
 
 ```c++
 #include <bits/stdc++.h>
@@ -1432,7 +1432,7 @@ void EularSieve(int range) {
 		if (not_pri[i] == 0)
 			pri[++pri[0]] = i;
 		for (int j = 1; j <= pri[0]; j++) {
-			if (pri[j] * i > range)break;
+			if (pri[j] * i >= range)break;
 			not_pri[pri[j] * i] = 1;
 			if (i % pri[j] == 0)break;
 		}
@@ -1748,6 +1748,660 @@ $$
 
 # 计算几何
 
+## 总模板
+
+```c++
+namespace Geometry {
+    // 二维点类
+    struct Point {
+        double x, y;
+        Point() {
+            x = y = 0;
+        }
+        Point(double X, double Y) {
+            x = X, y = Y;
+        }
+        double get_len() {
+            return sqrt((double)x * x + y * y);
+        }
+        Point operator+(const Point& b) const {
+            return Point(x + b.x, y + b.y);
+        }
+        Point operator-(const Point& b) const {
+            return Point(x - b.x, y - b.y);
+        }
+        Point operator*(const double c) const {
+            return Point(x * c, y * c);
+        }
+        Point operator/(const double c) const {
+            return Point(x / c, y / c);
+        }
+        bool operator==(const Point& b) const {
+            return fsign(x - b.x) == 0 && fsign(y - b.y) == 0;
+        }
+        bool operator!=(const Point& b) const {
+            return fsign(x - b.x) != 0 || fsign(y - b.y) != 0;
+        }
+        bool operator<(const Point& b) const {
+            if(fsign(x - b.x) == 0)
+                return fsign(y - b.y) == -1;
+            return fsign(x - b.x) == -1;
+        }
+        bool operator>(const Point& b) const {
+            if(fsign(x - b.x) == 0)
+                return fsign(y - b.y) == 1;
+            return fsign(x - b.x) == 1;
+        }
+        //逆时针旋转theta角
+        Point rotate(const double& theta) const {
+            Point c;
+            c.x = x * cos(theta) - y * sin(theta);
+            c.y = y * cos(theta) + x * sin(theta);
+            return c;
+        }
+        //逆时针90度
+        Point rotate_inv90() const {
+            return Point(-y, x);
+        }
+        //顺时针90度
+        Point rotate_clk90() const {
+            return Point(y, -x);
+        }
+        // 取模的平方
+        double norm_square() const {
+            return x * x + y * y;
+        }
+        // 取模
+        double norm_sqrt() const {
+            return sqrt(x * x + y * y);
+        }
+    };
+    // 求象限
+    int quad(Point p) {
+        return ((p.y < 0) ? 1 : 3) + ((p.x < 0) ^ (p.y < 0));
+    }
+    // 点乘
+    double dot(Point a, Point b) {
+        return a.x * b.x + a.y * b.y;
+    }
+    // 叉乘
+    double cross(Point a, Point b) {
+        return a.x * b.y - a.y * b.x;
+    }
+    // 求向量夹角cos
+    double get_angel_cos(Point a, Point b) {
+        return dot(a, b) / a.norm_sqrt() / b.norm_sqrt();
+    }
+    // 欧几里得距离
+    double e_dis(Point a, Point b) {
+        return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+    }
+    // 曼哈顿距离
+    double m_dis(Point a, Point b) {
+        return fabs(a.x - b.x) + fabs(a.y - b.y);
+    }
+    // 切比雪夫距离
+    double c_dis(Point a, Point b) {
+        return max(fabs(a.x - b.x), fabs(a.y - b.y));
+    }
+    // 二维向量类
+    typedef Point Vector2D;
+    // 以先x后y比较,小值在前
+    bool compare_x(Point a, Point b) {
+        return (fsign(a.x - b.x) == 0) ? (fsign(a.y - b.y) < 0) : (fsign(a.x - b.x) < 0);
+    }
+    // 以先y后x比较,小值在前
+    bool compare_y(Point a, Point b) {
+        return (fsign(a.y - b.y) == 0) ? (fsign(a.x - b.x) < 0) : (fsign(a.y - b.y) < 0);
+    }
+    // 极角排序叉积象限比较法,小值在前
+    bool compare_angle(Point a, Point b) {
+        if(quad(a) != quad(b))
+            return quad(a) < quad(b);
+        if(cross(a, b) != 0)
+            return cross(a, b) > 0;
+        return a.x < b.x;
+    }
+    // 判定两向量关系,<0逆反
+    int position_vector_vector(Vector2D a, Vector2D b) {
+        if(fsign(cross(a, b)) == -1)  // a在b的逆时针方向（左侧）
+            return -2;
+        if(fsign(cross(a, b)) == 1)  // a在b的顺时针方向（右侧）
+            return 2;
+        if(fsign(dot(a, b)) == -1)  // ab反向
+            return -1;
+        if(fsign(a.norm_square() - b.norm_square()) == -1)  // ab同向,且b长于a
+            return 1;
+        else  // ab同向,且b短于a,b在a上
+            return 0;
+    }
+    // 判定三点关系(base->b,base->c)
+    int position_point_point(Point base, Point b, Point c) {
+        return position_vector_vector(b - base, c - base);
+    }
+    // 求两个向量围起来的三角形面积
+    double get_S(Vector2D a, Vector2D b) {
+        return fabs(cross(a, b)) / 2;
+    }
+    // 求给出三边长的三角形面积
+    double get_S(double a, double b, double c) {
+        double s = (a + b + c) / 2;
+        return sqrt(s * (s - a) * (s - b) * (s - c));
+    }
+    // 直线类
+    struct Line {
+        Point s, t;
+        Vector2D normal;  //方向向量
+        Line() {
+        }
+        Line(const Point st, const Point ed) {
+            set(st, ed);
+        }
+        void set(const Point a, const Point b) {
+            s = a, t = b;
+            update_normal();
+        }
+        void update_normal() {
+            normal = t - s;
+        }
+        bool operator<(Line a) const {
+            if(normal != a.normal)
+                return normal < a.normal;
+            else if(s != a.s)
+                return s < a.s;
+            return t < a.t;
+        }
+        //反向
+        void inv() {
+            swap(s, t);
+            normal.x = -normal.x, normal.y = -normal.y;
+        }
+    };
+    // 线段
+    typedef Line Seg;
+    // 判定点与直线关系 2:左,1:在直线上,0:右
+    int position_point_line(Point p, Line l) {
+        int res = fsign(cross(p - l.s, l.normal));
+        if(res == 1)
+            return 0;
+        if(res == 0)
+            return 1;
+        return 2;
+    }
+    // 判定点与线段关系 3:左,2:共线但不在线段上,1:在线段上,0:右
+    int position_point_seg(Point p, Seg l) {
+        int res = fsign(cross(p - l.s, l.normal));
+        if(res == 1)
+            return 0;
+        if(res == 0) {
+            if(p.x >= min(l.s.x, l.t.x) && p.x <= max(l.s.x, l.t.x) && p.y >= min(l.s.y, l.t.y) && p.y <= max(l.s.y, l.t.y))
+                return 1;
+            else
+                return 2;
+        }
+        return 3;
+    }
+    // 判定直线(线段)是否垂直
+    bool is_vertical_line(const Line a, const Line b) {
+        return fsign(dot(a.normal, b.normal)) == 0;
+    }
+    // 判定直线(线段)是否平行
+    bool is_parallel_line(const Line a, const Line b) {
+        return fsign(cross(a.normal, b.normal)) == 0;
+    }
+    // 判定直线(线段)是否共线
+    bool is_same_line(const Line a, const Line b) {
+        return is_parallel_line(a, b) && is_parallel_line(Line(a.s, b.t), Line(b.s, a.t));
+    }
+    // 判定直线是否相交
+    bool is_corss_line(Line a, Line b) {
+        return !is_parallel_line(a, b);
+    }
+    // 判定线段是否相交
+    bool is_corss_seg(Seg a, Seg b) {
+        if(position_point_point(a.s, a.t, b.s) * position_point_point(a.s, a.t, b.t) > 0)
+            return 0;
+        if(position_point_point(b.s, b.t, a.s) * position_point_point(b.s, b.t, a.t) > 0)
+            return 0;
+        return 1;
+    }
+    // 求p在直线上的投影(垂点)
+    Point get_point_projection(Point p, Line line) {
+        double num_t = dot(p - line.s, line.normal) / line.normal.norm_square();
+        return line.s + line.normal * num_t;
+    }
+    // 求线段交点,不包含无交点情况
+    Point get_point_corss_seg_seg(Seg a, Seg b) {
+        double d1 = fabs(cross(b.normal, a.s - b.s));
+        double d2 = fabs(cross(b.normal, a.t - b.s));
+        if(fsign(d1 + d2) == 0)
+            return b.s;
+        double num_t = d1 / (d1 + d2);
+        return a.s + a.normal * num_t;
+    }
+    // 求直线交点,不包含无交点情况
+    Point get_point_corss_line_line(Line a, Line b) {
+        double d1 = cross(a.normal, b.normal);
+        double d2 = cross(a.normal, a.t - b.s);
+        if(fsign(d1 + d2) == 0)
+            return b.s;
+        double num_t = d2 / d1;
+        return b.s + b.normal * num_t;
+    }
+    // 求点到直线距离
+    double get_dis_point_line(Point p, Line l) {
+        return fabs(cross(l.normal, p - l.s) / l.normal.norm_sqrt());
+    }
+    // 求点到线段距离
+    double get_dis_point_seg(Point p, Seg l) {
+        if(fsign(dot(l.normal, p - l.s)) < 0)
+            return (p - l.s).norm_sqrt();
+        if(fsign(dot(l.normal, p - l.t)) > 0)
+            return (p - l.t).norm_sqrt();
+        return get_dis_point_line(p, l);
+    }
+    // 求直线之间的距离
+    double get_dis_line_line(Line a, Line b) {
+        if(is_corss_line(a, b))
+            return 0;
+        return get_dis_point_line(b.t, a);
+    }
+    // 求线段之间的距离
+    double get_dis_seg_seg(Seg a, Seg b) {
+        if(is_corss_seg(a, b))
+            return 0;
+        double dis1 = min(get_dis_point_seg(b.s, a), get_dis_point_seg(b.t, a));
+        double dis2 = min(get_dis_point_seg(a.s, b), get_dis_point_seg(a.t, b));
+        return min(dis1, dis2);
+    }
+    // 求线段到直线距离
+    double get_dis_seg_line(Seg seg, Line line) {
+        if(is_parallel_line(seg, line))
+            return get_dis_point_line(seg.s, line);
+        if(position_point_line(seg.s, line) * position_point_line(seg.t, line) <= 0)
+            return 0;
+        return min(get_dis_point_line(seg.s, line), get_dis_point_line(seg.t, line));
+    }
+    // 多边形类
+    struct Polygon {
+        vector<Point> poi;
+        int n;
+        Polygon() {
+            clear();
+        }
+        Polygon(vector<Point>& points) {
+            set(points);
+        }
+        void set(vector<Point>& points) {
+            poi = points;
+            n = poi.size();
+        }
+        void clear() {
+            poi.clear();
+            n = 0;
+        }
+        void add_point(Point p) {
+            poi.push_back(p);
+            n++;
+        }
+        void add_point(double x, double y) {
+            poi.push_back(Point(x, y));
+            n++;
+        }
+        //求多边形面积
+        double get_S() {
+            if(n == 0)
+                return 0;
+            double res = cross(poi[0], poi[n - 1]);
+            for(int i = 1; i < n; i++) {
+                res += cross(poi[i], poi[i - 1]);
+            }
+            return fabs(res) / 2;
+        }
+    };
+    // 判定点与多边形关系 2:点在多边形里,1:点在多边形边上,0:点在多边形外
+    int position_polygon_point(Polygon& poly, Point p) {
+        bool x = false;
+        poly.poi.push_back(poly.poi[0]);
+        for(int i = 0; i < poly.n; i++) {
+            Point a = poly.poi[i] - p, b = poly.poi[i + 1] - p;
+            if(fsign(abs(cross(a, b))) == 0 && fsign(dot(a, b)) < 1)
+                return 1;
+            if(fsign(a.y - b.y) > 0)
+                swap(a, b);
+            if(fsign(a.y) < 1 && fsign(b.y) > 0 && fsign(cross(a, b)) > 0)
+                x = !x;
+        }
+        poly.poi.pop_back();
+        return (x ? 2 : 0);
+    }
+    // 判定是否为凸包
+    bool is_convex(Polygon& poly) {
+        for(int i = 0; i < poly.n; i++) {
+            if(position_point_point(poly.poi[i], poly.poi[(i + 1 >= poly.n) ? (i + 1 - poly.n) : (i + 1)], poly.poi[(i + 2 >= poly.n) ? (i + 2 - poly.n) : (i + 2)]) == -2)
+                return 0;
+        }
+        return 1;
+    }
+    // 从点集构造凸包,若不想要在凸包的边上有点改为<=0
+    Polygon build_convex(vector<Point> pointSet) {
+        int now = 0, n = pointSet.size();
+        sort(pointSet.begin(), pointSet.end());
+        vector<Point> res(n << 1);
+        for(int i = 0; i < n; res[now++] = pointSet[i++]) {
+            while(now > 1 && fsign(cross(res[now - 1] - res[now - 2], pointSet[i] - res[now - 2])) < 0)
+                now--;
+        }
+        int t = now;
+        for(int i = n - 2; i >= 0; res[now++] = pointSet[i--]) {
+            while(now > t && fsign(cross(res[now - 1] - res[now - 2], pointSet[i] - res[now - 2])) < 0)
+                now--;
+        }
+        res.resize(now - 1);
+        return Polygon(res);
+    }
+    // 求凸包直径,旋转卡壳
+    double get_diameter_convex(Polygon& poly) {
+        if(poly.n == 2)
+            return e_dis(poly.poi[0], poly.poi[1]);
+        int a = 0, b = 0;
+        for(int i = 1; i < poly.n; i++) {
+            if(poly.poi[i] < poly.poi[a])
+                a = i;
+            if(poly.poi[i] > poly.poi[b])
+                b = i;
+        }
+        double max_dis = e_dis(poly.poi[a], poly.poi[b]);
+        int now_a = a, now_b = b;
+        while(now_a != b || now_b != a) {
+            double now_dis = e_dis(poly.poi[now_a], poly.poi[now_b]);
+            max_dis = max(max_dis, now_dis);
+            int next_a = (now_a + 1 == poly.n) ? 0 : now_a + 1;
+            int next_b = (now_b + 1 == poly.n) ? 0 : now_b + 1;
+            if(fsign(cross(poly.poi[next_a] - poly.poi[now_a], poly.poi[next_b] - poly.poi[now_b])) < 0)
+                now_a = next_a;
+            else
+                now_b = next_b;
+        }
+        return max_dis;
+    }
+    // 求凸包沿直线方向向量切割后左侧的凸包
+    Polygon get_convex_cut(Polygon& poly, Line& l) {
+        vector<Point> res;
+        for(int i = 0; i < poly.n; i++) {
+            Point A = poly.poi[i];
+            Point B = poly.poi[(i + 1) == poly.n ? 0 : (i + 1)];
+            if(position_point_point(l.s, l.t, A) != -2)
+                res.push_back(A);
+            if(position_point_point(l.s, l.t, A) * position_point_point(l.s, l.t, B) < 0)
+                res.push_back(get_point_corss_seg_seg(Line(A, B), l));
+        }
+        return Polygon(res);
+    }
+    // 圆类
+    struct Circle {
+        Point o;
+        double r;
+        Circle() {
+            clear();
+        }
+        Circle(Point center, double radix) {
+            set(center, radix);
+        }
+        void clear() {
+            o.x = o.y = 0, r = 0;
+        }
+        void set(Point center, double radix) {
+            o = center, r = radix;
+        }
+        // 圆面积
+        double get_S() {
+            return PI * r * r;
+        }
+        // 根据极角获得对应点
+        Point get_point(double angle) {
+            return Point(o.x + r * cos(angle), o.y + r * sin(angle));
+        }
+        // 根据向量方向获得对应点
+        Point get_point(Vector2D dir) {
+            return o + dir / dir.norm_sqrt() * r;
+        }
+    };
+    // 判定点与圆的关系 2:在圆内,1:在圆的边上,0:在圆外
+    int position_circle_point(Circle& c, Point p) {
+        double dis = e_dis(c.o, p) - c.r;
+        if(fsign(dis) == 0)
+            return 1;
+        else if(fsign(dis) == 1)
+            return 0;
+        else
+            return 2;
+    }
+    // 判定直线与圆的关系(交点个数) 2:相交,1:相切,0:相离
+    int position_circle_line(Circle& c, Line& l) {
+        double dis = get_dis_point_line(c.o, l) - c.r;
+        if(fsign(dis) == 0)
+            return 1;
+        else if(fsign(dis) == 1)
+            return 0;
+        else
+            return 2;
+    }
+    // 判定线段与圆的关系(交点个数) 2:相交,1:相切,0:相离
+    int position_circle_seg(Circle& c, Seg& l) {
+        double dis = get_dis_point_seg(c.o, l) - c.r;
+        if(fsign(dis) == 0)
+            return 1;
+        else if(fsign(dis) == 1)
+            return 0;
+        else
+            return 2;
+    }
+    // 判定圆与圆的关系(切线数量) 4:相离,3:外接,2:相交,1:内切,0:包含
+    int position_circle_circle(Circle& c1, Circle& c2) {
+        double dis = e_dis(c1.o, c2.o);
+        if(fsign(dis - (c1.r + c2.r)) > 0)
+            return 4;
+        else if(fsign(dis - (c1.r + c2.r)) == 0)
+            return 3;
+        else if(fsign(dis - fabs(c1.r - c2.r)) == 0)
+            return 1;
+        else if(fsign(dis - fabs(c1.r - c2.r)) < 0)
+            return 0;
+        else
+            return 2;
+    }
+    // 判定多边形与圆的关系 ,2:其他,1:内切,0:包含
+    int position_polygon_circle(Polygon& poly, Circle& c) {
+        if(position_polygon_point(poly, c.o) != 2)
+            return 2;
+        Line l;
+        int pos, res = 0;
+        for(int i = 0; i < poly.n; i++) {
+            l.set(poly.poi[i], poly.poi[(i + 1 == poly.n) ? 0 : (i + 1)]);
+            pos = fsign(c.r - get_dis_point_seg(c.o, Line(l)));
+            if(pos == 1)
+                return 2;
+            else if(pos == 0)
+                res = 1;
+        }
+        return res;
+    }
+    // 构建三角形内切圆,可以处理三点共线的情况
+    Circle build_circle_triangle_incision(Point p1, Point p2, Point p3) {
+        Circle res;
+        double a = (p2 - p3).norm_sqrt(), b = (p3 - p1).norm_sqrt(), c = (p1 - p2).norm_sqrt();
+        double S = fabs(cross(p1 - p2, p2 - p3));
+        double C = a + b + c;
+        res.r = S / C;
+        res.o.x = (a * p1.x + b * p2.x + c * p3.x) / C;
+        res.o.y = (a * p1.y + b * p2.y + c * p3.y) / C;
+        return res;
+    }
+    // 构建三角形外接圆,不可以处理三点共线的情况
+    Circle build_circle_triangle_external(Point p1, Point p2, Point p3) {
+        Point mid1 = (p2 + p1) / 2;
+        Point mid2 = (p2 + p3) / 2;
+        Line v1(mid1, mid1 + (p1 - p2).rotate_inv90());
+        Line v2(mid2, mid2 + (p3 - p2).rotate_inv90());
+        Point c = get_point_corss_line_line(v1, v2);
+        return Circle(c, e_dis(c, p1));
+    }
+    // 求圆与直线交点
+    vector<Point> get_point_corss_circle_line(Circle& c, Line l) {
+        vector<Point> res;
+        Point p = get_point_projection(c.o, l);
+        int pos = fsign(e_dis(p, c.o) - c.r);
+        if(pos < 0) {
+            double num_t = sqrt(c.r * c.r - (p - c.o).norm_square()) / l.normal.norm_sqrt();
+            res.push_back(p - l.normal * num_t);
+            res.push_back(p + l.normal * num_t);
+        }
+        else if(pos == 0)
+            res.push_back(p);
+        return res;
+    }
+    // 求圆与圆交点
+    vector<Point> get_point_corss_circle_circle(Circle& c1, Circle& c2) {
+        vector<Point> res;
+        int pos = position_circle_circle(c1, c2);
+        if(pos == 0 || pos == 4)
+            return res;
+        double dis = e_dis(c2.o, c1.o);
+        double angle_ori = atan2((c2.o - c1.o).y, (c2.o - c1.o).x);
+        if(pos == 2) {
+            double angle_tar = acos((c1.r * c1.r - c2.r * c2.r + dis * dis) / (2 * c1.r * dis));
+            res.push_back(c1.get_point(angle_ori + angle_tar));
+            res.push_back(c1.get_point(angle_ori - angle_tar));
+        }
+        else
+            res.push_back(c1.get_point(angle_ori));
+        return res;
+    }
+    // 求圆过某点的切线与圆的切点
+    vector<Point> get_point_tangent_circle_point(Circle& c, Point p) {
+        vector<Point> res;
+        int pos = position_circle_point(c, p);
+        if(pos == 0) {
+            double dis = e_dis(c.o, p);
+            double angle_tar = asin(c.r / dis);
+            double angle_ori = atan2((c.o - p).y, (c.o - p).x);
+            double len = sqrt(dis * dis - c.r * c.r);
+            res.push_back(p + Vector2D(len * cos(angle_ori + angle_tar), len * sin(angle_ori + angle_tar)));
+            res.push_back(p + Vector2D(len * cos(angle_ori - angle_tar), len * sin(angle_ori - angle_tar)));
+        }
+        else if(pos == 1)
+            res.push_back(p);
+        return res;
+    }
+    // 求两个圆的公切线
+    vector<Line> get_line_tangent_circle_circle(Circle c1, Circle c2) {
+        vector<Line> res;
+        int exchange = 0;
+        if(c1.r < c2.r) {
+            swap(c1, c2);
+            exchange = 1;
+        }
+        int pos = position_circle_circle(c1, c2);
+        if(pos == 0)
+            return res;
+        double dis = e_dis(c1.o, c2.o);
+        double angle_ori = atan2((c2.o - c1.o).y, (c2.o - c1.o).x);
+        if(pos == 1) {
+            res.push_back(Line(c1.get_point(angle_ori), c2.get_point(angle_ori)));
+        }
+        else {
+            double angle_tar = acos((c1.r - c2.r) / dis);
+            res.push_back(Line(c1.get_point(angle_ori + angle_tar), c2.get_point(angle_ori + angle_tar)));
+            res.push_back(Line(c1.get_point(angle_ori - angle_tar), c2.get_point(angle_ori - angle_tar)));
+            if(pos == 4) {
+                angle_tar = acos((c1.r + c2.r) / dis);
+                res.push_back(Line(c1.get_point(angle_ori + angle_tar), c2.get_point(angle_ori + angle_tar + PI)));
+                res.push_back(Line(c1.get_point(angle_ori - angle_tar), c2.get_point(angle_ori - angle_tar + PI)));
+            }
+            else if(pos == 3) {
+                res.push_back(Line(c1.get_point(angle_ori), c2.get_point(angle_ori + PI)));
+            }
+        }
+        if(exchange)
+            for(int i = 0; i < res.size(); i++)
+                res[i].inv();
+        return res;
+    }
+    // 构建过已知两点和半径的圆
+    vector<Circle> build_circle_point_point_radix(Point p1, Point p2, double radix) {
+        Circle c1(p1, radix), c2(p2, radix);
+        vector<Point> newo = get_point_corss_circle_circle(c1, c2);
+        vector<Circle> res;
+        for(int i = 0; i < newo.size(); i++) {
+            res.push_back(Circle(newo[i], radix));
+        }
+        return res;
+    }
+    // 求向量夹角AOB方向上OA到OB的有向扇形面积
+    double get_s_sector_vectors(Vector2D OA, Vector2D OB, double r) {
+        if(OA.norm_square() == 0 || OB.norm_square() == 0)
+            return 0;
+        double angle = acos(get_angel_cos(OA, OB));
+        if(fsign(cross(OA, OB)) >= 0)
+            return r * r * angle / 2;
+        else
+            return -r * r * angle / 2;
+    }
+    // 求角AOB方向上OA到OB的有向扇形面积
+    double get_s_sector_points(Point O, Point A, Point B, double r) {
+        return get_s_sector_vectors(A - O, B - O, r);
+    }
+    // 求两个圆的相交面积
+    double get_s_circle_circle(Circle& c1, Circle& c2) {
+        int pos = position_circle_circle(c1, c2);
+        if(pos >= 3)
+            return 0;
+        if(pos <= 1)
+            return (c1.r < c2.r) ? c1.get_S() : c2.get_S();
+        Vector2D d = c2.o - c1.o;
+        double dis = d.norm_sqrt(), dis2 = d.norm_square();
+        double angle_1 = acos((dis2 + c1.r * c1.r - c2.r * c2.r) / (2 * dis * c1.r)) * 2;
+        double angle_2 = acos((dis2 + c2.r * c2.r - c1.r * c1.r) / (2 * dis * c2.r)) * 2;
+        return (angle_1 - sin(angle_1)) * c1.r * c1.r / 2 + (angle_2 - sin(angle_2)) * c2.r * c2.r / 2;
+    }
+    // 求三角形aob与圆的有向相交面积,o为圆心
+    double get_s_triangle_circle(Point A, Point B, Circle& c) {
+        Vector2D OA = A - c.o, OB = B - c.o;
+        double res = cross(OA, OB), lena = OA.norm_square(), lenb = OB.norm_square(), r = c.r * c.r;
+        if(fsign(res) == 0)
+            return 0;
+        if(fsign(max(lena, lenb) - r) <= 0)
+            return res / 2;
+        if(fsign(get_dis_point_seg(c.o, Line(A, B)) - c.r) >= 0)
+            return get_s_sector_vectors(OA, OB, c.r);
+        vector<Point> p = get_point_corss_circle_line(c, Line(A, B));
+        Vector2D OE = p[0] - c.o, OF = p[1] - c.o;
+        if(fsign(r - lena) > 0)
+            return cross(OA, OF) / 2 + get_s_sector_vectors(OF, OB, c.r);
+        if(fsign(r - lenb) > 0)
+            return cross(OE, OB) / 2 + get_s_sector_vectors(OA, OE, c.r);
+        return get_s_sector_vectors(OA, OE, c.r) + cross(OE, OF) / 2 + get_s_sector_vectors(OF, OB, c.r);
+    }
+    // 求多边形与圆的相交面积
+    double get_s_polygon_circle(Polygon& poly, Circle& c) {
+        if(poly.n < 3)
+            return 0;
+        if(position_polygon_circle(poly, c) != 2)
+            return c.get_S();
+        double res = 0;
+        for(int i = 0; i < poly.n; i++) {
+            int j = ((i + 1 == poly.n) ? 0 : i + 1);
+            res += get_s_triangle_circle(poly.poi[i], poly.poi[j], c);
+        }
+        return res;
+    }
+};
+using namespace Geometry;
+```
+
+
+
 ## 二维点与向量
 
 ### 基本类
@@ -1829,11 +2483,11 @@ struct Point {
         return a.x * b.y - a.y * b.x;
     }
     //求向量夹角cos
-    friend double included_angel(Point a, Point b) {
+    friend double get_angel_cos(Point a, Point b) {
         return (dot(a, b)) / (a.norm_sqrt() * b.norm_sqrt());
     }
     //判定两向量关系,<0逆反
-    friend int vectors_postion(Point a, Point b) {
+    friend int position_vectors(Point a, Point b) {
         if(fsign(cross(a, b)) == -1)  // a在b的逆时针方向（左侧）
             return -2;
         if(fsign(cross(a, b)) == 1)  // a在b的顺时针方向（右侧）
@@ -1846,8 +2500,8 @@ struct Point {
             return 0;
     }
     //判定三点关系(base->b,base->c)
-    friend int points_postion(Point base, Point b, Point c) {
-        return vectors_postion(b - base, c - base);
+    friend int position_points(Point base, Point b, Point c) {
+        return position_vectors(b - base, c - base);
     }
     //欧几里得距离
     friend double e_dis(Point a, Point b) {
@@ -1862,6 +2516,7 @@ struct Point {
         return max(fabs(a.x - b.x), fabs(a.y - b.y));
     }
 };
+
 ```
 
 ### 面积
@@ -1873,6 +2528,17 @@ double get_S(Point a, Point b) {
 	return _abs(cross(a, b)) / 2;
 }
 ```
+
+#### 海伦公式
+
+```c++
+double get_S(double a, double b, double c) {
+    double s = (a + b + c) / 2;
+    return sqrt(s * (s - a) * (s - b) * (s * c));
+}
+```
+
+
 
 ### 角度
 
@@ -1968,6 +2634,45 @@ int c_dis(Point& a, Point& b) {
 
 已知点集 $(x,y)$，求任意点对的**切比雪夫距离**: 可将所有点变化为 $\displaystyle (\frac{x+y}{2},\frac{x-y}{2})$后求新坐标系下对应点对的**曼哈顿距离**；
 
+### 平面最近点对
+
+```
+bool compare_y(Point a, Point b) {
+    return (fsign(a.y - b.y) == 0) ? (fsign(a.x - b.x) < 0) : (fsign(a.y - b.y) < 0);
+}
+bool compare_x(Point a, Point b) {
+    return (fsign(a.x - b.x) == 0) ? (fsign(a.y - b.y) < 0) : (fsign(a.x - b.x) < 0);
+}
+double closest_pair(vector<Point>::iterator now, int temp_n) {
+    if(temp_n <= 1)
+        return 1e50;
+    int mid = temp_n >> 1;
+    double x = now[mid].x;
+    double dis = min(closest_pair(now, mid), closest_pair(now + mid, temp_n - mid));
+    inplace_merge(now, now + mid, now + temp_n, compare_y);
+    vector<Point> temp;
+    for(int i = 0; i < temp_n; i++) {
+        double nowx = now[i].x;
+        double nowy = now[i].y;
+        if(fsign(abs(nowx - x) - dis) >= 0)
+            continue;
+        for(int j = 0; j < temp.size(); j++) {
+            double dx = nowx - temp[temp.size() - 1 - j].x;
+            double dy = nowy - temp[temp.size() - 1 - j].y;
+            if(fsign(dy - dis) >= 0)
+                break;
+            dis = min(dis, sqrt(dx * dx + dy * dy));
+        }
+        temp.push_back(now[i]);
+    }
+    return dis;
+}
+double closest_pair(vector<Point> points) {
+    sort(points.begin(), points.end(), compare_x);
+    return closest_pair(points.begin(), points.size());
+}
+```
+
 ## 二维直线
 
 ### 基本类
@@ -1975,7 +2680,6 @@ int c_dis(Point& a, Point& b) {
 #### 点点式
 
 ```c++
-//点点式直线
 struct Line {
     Point s, t;
     Vector2D normal;  //方向向量
@@ -1992,7 +2696,7 @@ struct Line {
         normal = t - s;
     }
     bool operator==(Line a) const {
-        return same((*this), a);
+        return is_same_line((*this), a);
     }
     bool operator<(Line a) const {
         if(normal != a.normal)
@@ -2001,32 +2705,32 @@ struct Line {
             return s < a.s;
         return t < a.t;
     }
-    friend bool is_vertical(const Line a, const Line b) {
+    friend bool is_vertical_line(const Line a, const Line b) {
         return fsign(dot(a.normal, b.normal)) == 0;
     }
-    friend bool is_parallel(const Line a, const Line b) {
+    friend bool is_parallel_line(const Line a, const Line b) {
         return fsign(cross(a.normal, b.normal)) == 0;
     }
-    friend bool same(const Line a, const Line b) {
-        return is_parallel(a, b) && is_parallel(Line(a.s, b.t), Line(b.s, a.t));
+    friend bool is_same_line(const Line a, const Line b) {
+        return is_parallel_line(a, b) && is_parallel_line(Line(a.s, b.t), Line(b.s, a.t));
     }
     // 求p在直线line上的投影(垂点)
-    friend Point projection(Line line, Point p) {
+    friend Point get_point_projection(Line line, Point p) {
         double num_t = dot(p - line.s, line.normal) / line.normal.norm_square();
         return line.s + line.normal * num_t;
     }
     // 判定线段是否相交
     friend bool is_corss_seg(Line a, Line b) {
-        if(points_postion(a.s, a.t, b.s) * points_postion(a.s, a.t, b.t) > 0)
+        if(position_points(a.s, a.t, b.s) * position_points(a.s, a.t, b.t) > 0)
             return 0;
-        if(points_postion(b.s, b.t, a.s) * points_postion(b.s, b.t, a.t) > 0)
+        if(position_points(b.s, b.t, a.s) * position_points(b.s, b.t, a.t) > 0)
             return 0;
         return 1;
     }
     // 求线段相交点
-    friend Point get_corss_point(Line a, Line b) {
+    friend Point get_point_corss(Line a, Line b) {
         double d1 = fabs(cross(b.normal, a.s - b.s));
-        double d2 = fabs(cross(b.normal, a.t - b.t));
+        double d2 = fabs(cross(b.normal, a.t - b.s));
         if(fsign(d1 + d2) == 0)
             return b.s;
         double num_t = d1 / (d1 + d2);
@@ -2195,7 +2899,7 @@ struct Polygon {
     //判定是否为凸包
     bool is_convex() {
         for(int i = 0; i < n; i++) {
-            if(points_postion(poi[i], poi[(i + 1) % n], poi[(i + 2) % n]) == -2)
+            if(position_points(poi[i], poi[(i + 1) % n], poi[(i + 2) % n]) == -2)
                 return 0;
         }
         return 1;
@@ -2242,8 +2946,8 @@ struct Polygon {
         }
         return max_dis;
     }
-    //判定点与多边形关系,点在多边形里:2,点在多边形边上:1,点在多边形外:0
-    friend int polygon_point_position(Polygon& poly, Point p) {
+    //判定点与多边形关系 2:点在多边形里,1:点在多边形边上,0:点在多边形外
+    friend int position_polygon_point(Polygon& poly, Point p) {
         bool x = false;
         poly.poi.push_back(poly.poi[0]);
         for(int i = 0; i < poly.n; i++) {
@@ -2264,54 +2968,17 @@ struct Polygon {
         for(int i = 0; i < poly.n; i++) {
             Point A = poly.poi[i];
             Point B = poly.poi[(i + 1) == poly.n ? 0 : (i + 1)];
-            if(points_postion(l.s, l.t, A) != -2)
+            if(position_points(l.s, l.t, A) != -2)
                 res.push_back(A);
-            if(points_postion(l.s, l.t, A) * points_postion(l.s, l.t, B) < 0)
-                res.push_back(get_corss_point(Line(A, B), l));
+            if(position_points(l.s, l.t, A) * position_points(l.s, l.t, B) < 0)
+                res.push_back(get_point_corss(Line(A, B), l));
         }
         return Polygon(res);
     }
 };
 ```
 
-## 平面最近点对
-
-```c++
-bool compare_y(Point a, Point b) {
-    return (fsign(a.y - b.y) == 0) ? (fsign(a.x - b.x) < 0) : (fsign(a.y - b.y) < 0);
-}
-bool compare_x(Point a, Point b) {
-    return (fsign(a.x - b.x) == 0) ? (fsign(a.y - b.y) < 0) : (fsign(a.x - b.x) < 0);
-}
-double closest_pair(vector<Point>::iterator now, int temp_n) {
-    if(temp_n <= 1)
-        return 1e50;
-    int mid = temp_n >> 1;
-    double x = now[mid].x;
-    double dis = min(closest_pair(now, mid), closest_pair(now + mid, temp_n - mid));
-    inplace_merge(now, now + mid, now + temp_n, compare_y);
-    vector<Point> temp;
-    for(int i = 0; i < temp_n; i++) {
-        double nowx = now[i].x;
-        double nowy = now[i].y;
-        if(fsign(abs(nowx - x) - dis) >= 0)
-            continue;
-        for(int j = 0; j < temp.size(); j++) {
-            double dx = nowx - temp[temp.size() - 1 - j].x;
-            double dy = nowy - temp[temp.size() - 1 - j].y;
-            if(fsign(dy - dis) >= 0)
-                break;
-            dis = min(dis, sqrt(dx * dx + dy * dy));
-        }
-        temp.push_back(now[i]);
-    }
-    return dis;
-}
-double closest_pair(vector<Point> points) {
-    sort(points.begin(), points.end(), compare_x);
-    return closest_pair(points.begin(), points.size());
-}
-```
+ 
 
 
 
@@ -3671,8 +4338,6 @@ private:
 
 #### 最大流做法
 
-![image-20211116210953397](C:\Users\12038\AppData\Roaming\Typora\typora-user-images\image-20211116210953397.png)
-
 建立超级源点和超级汇点，源点到x连流量为1，x到y每条正边流量为1，最后流入超级汇点的即为最大匹配数，枚举所有正边看剩余流量即可确定是否为选用的匹配边。
 
 ```c++
@@ -3688,6 +4353,35 @@ for(int i = 0; i < f; i++) {
     cin >> u >> v;
     addedge(u, n + v, 1);
     addedge(n + v, u, 0);
+}
+```
+
+#### 匈牙利做法
+
+```c++
+int match[MX], ans[MX];
+bool vis[MX];
+bool DFS(int u) {
+    for(int i = head[u]; i; i = e[i]._next) {
+        int v = e[i].v;
+        if(vis[v] == 0) {
+            vis[v] = 1;
+            if(match[v] == 0 || DFS(match[v])) {
+                match[v] = u;
+                ans[u] = v;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+int max_match() {
+    int ans = 0;
+    for(int i = 1; i <= n; i++) {
+        memset(vis, 0, sizeof(bool) * (n + 5));
+        ans += DFS(i);
+    }
+    return ans;
 }
 ```
 
