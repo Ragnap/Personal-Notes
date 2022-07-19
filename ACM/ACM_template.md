@@ -1,4 +1,4 @@
-基本框架
+# 基本框架
 
 ```c++
 #include <bits/stdc++.h>
@@ -95,7 +95,7 @@ cout.flags(ios::fixed);
 cout.precision(2);
 ```
 
-#### 
+
 
 # STL
 
@@ -121,7 +121,21 @@ while(next_permutation(v.begin(),v.end()){ ... }//遍历全排列
 
 ### upper_bound( ) & lower_bound()
 
-  $ O(log\ n)$  二分第一个 $ \geq x $(lower) 或者   $ < x $ (upper)  的地址，在不存在对应值时都为右端点
+  $ O(log\ n)$  二分第一个 $ \geq x $(lower) 或者   $ > x $ (upper)  的地址，在不存在对应值时都为右端点
+
+
+如果数组是从小到大排序
+
+​	那么`lower_bound(b,b+n,a[i])-b `: 输出b数组中第一个>=a[i]的值的下标
+
+​	那么`upper_bound(b,b+n,a[i])-b `: 输出b数组中第一个>a[i]的值的下标
+
+如果数组是从大到小排序
+
+​	那么`lower_bound(b,b+n,a[i],greater<int>())-b `: 输出b数组中第一个<=a[i]的值的下标
+
+​	那么`upper_bound(b,b+n,a[i],greater<int>())-b `: 输出b数组中第一个<a[i]的值的下标
+
 ```c++
 int pre=a[upper_bound(a,a+n,x)-a];//启，止，值
 ```
@@ -843,7 +857,7 @@ void solve() {
 			q.push_back(a[i]);
 			now = q.front();
 			if (i - now.id >= k)
-				q.pop_front();
+				q.pop_front(); 
 		}
 		if (i >= k)
 			cout << q.front().num << " ";//当前区间最大为队首
@@ -1576,7 +1590,7 @@ void get_set_inv(int range) {
 
 ### 阶乘逆元
 
-也可以顺势计算普通逆元
+也可以顺势计算普通阶乘 
 
 ```c++
 ll inv[MX],fac_inv[MX];
@@ -3150,12 +3164,40 @@ int Manacher(string s) {
 ```c++
 for(int i = 0; i < n; i++) {
     for(int j = W; j >= w[i]; j--) {
-        dp[j] = _max(dp[j], dp[j - w[i]] + v[i]);
+        dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
     }
 }
 ```
 
-### 完全背包 / 多重背包
+### 多重背包
+
+单调队列进行的优化
+
+```c++
+int que[MX];
+void solve() {
+    int now = 0;
+    for(int i = 0; i < n; i++) {
+        for(int k = 0; k < w[i]; k++) {
+            int head = 0, tail = -1;
+            for(int j = k; j <= W; j += w[i]) {
+                while(head <= tail && j - que[head] > num[i] * w[i])
+                    head++;
+                while(head <= tail && dp[now ^ 1][j] >= dp[now ^ 1][que[tail]] + (j - que[tail]) / w[i] * v[i])
+                    tail--;
+                que[++tail] = j;
+                dp[now][j] = dp[now ^ 1][que[head]] + (j - que[head]) / w[i] * v[i];
+            }
+        }
+        now ^= 1;
+    }
+    cout << dp[now ^ 1][W];
+}
+```
+
+
+
+### 完全背包 / 
 
 `dp[j]=max(dp[j],dp[j-w[i]*k]+v[i]*k)` , 其中 `dp[j]` 表示背包容量为 $j$ 时能取到的最大价值, $k$ 为一组物品 $i$ 的数量（通常使用倍增优化）
 
@@ -3163,9 +3205,9 @@ for(int i = 0; i < n; i++) {
 for(int i = 0; i < n; i++) {
     int have = num[i]; //物品i的总数量
     for(int k = 1; have; k <<= 1) {
-        k = _min(have, k);
+        k = min(have, k);
         for(int j = W; j >= w[i] * k; j--) {
-            dp[j] = _max(dp[j], dp[j - w[i] * k] + v[i] * k);
+            dp[j] = max(dp[j], dp[j - w[i] * k] + v[i] * k);
         }
         have -= k;
     }
@@ -3184,7 +3226,7 @@ for(int i = 1; i <= MX; i++)
     dp[i] = ll_INF;
 for(int i = 0; i < n; i++) {
     for(int j = MX; j >= v[i]; j--) {//mx为总价值
-        dp[j] = _min(dp[j], dp[j - v[i]] + w[i]);
+        dp[j] = min(dp[j], dp[j - v[i]] + w[i]);
     }
 }
 for(int i = MX; i >= 0; i--) {
@@ -3208,12 +3250,12 @@ void huge_bag() {
     for(int i = 1; i <= lim; i++)
         dp[i] = ll_INF;
     for(int i = 0; i < n; i++) { //小范围DP
-        ll have = _min(num[i], 50);
+        ll have = min(num[i], 50);
         num[i] -= have;
         for(ll k = 1; have; k <<= 1) {
             k = _min(have, k);
             for(int j = lim - 1; j >= v[i] * k; j--) {
-                dp[j] = _min(dp[j], dp[j - v[i] * k] + w[i] * k);
+                dp[j] = min(dp[j], dp[j - v[i] * k] + w[i] * k);
             }
             have -= k;
         }
@@ -3226,11 +3268,11 @@ void huge_bag() {
         if(rest < 0)
             continue;
         for(int i = 0; i < n; i++) {
-            ll div = _min(num[id[i]], rest / w[id[i]]);
+            ll div = min(num[id[i]], rest / w[id[i]]);
             rest -= div * w[id[i]];
             now += div * v[id[i]];
         }
-        ans = _max(ans, now);
+        ans = max(ans, now);
     }
     cout << ans << endl;
 }
@@ -3267,7 +3309,7 @@ void huge_bag() {
         }
         if(sumw <= W) {
             ll id = lower_bound(pre, pre + cnt, make_pair(W - sumw, ll_INF)) - pre;
-            ans = _max(ans, sumv + pre[id - 1].second);
+            ans = max(ans, sumv + pre[id - 1].second);
         }
     }
     cout << ans << endl;
@@ -3277,6 +3319,85 @@ void huge_bag() {
 ### 常见优化
 
 当费用相同时，只需保留价值最高的；当价值一定时，只需保留费用最低的；更一般的，对于两件物品 $i,j$ ，若$v_i \geq v_j$ 且  $w_i \leq w_j$ ，只需保留物品 $i$ 。
+
+## 最长子序列问题
+
+### 最长上升子序列 LIS
+
+​	最长不下降的话`sta[cnt] <= a[i]`改成`sta[cnt] < a[i]`
+
+```c++
+int sta[MX], cnt, dp[MX];
+int LIS() {
+    cnt = 1;
+    for(int i = 0; i <= n; i++)
+        sta[i] = int_INF;
+    for(int i = 0; i < n; i++) {
+        if(sta[cnt] <= a[i])
+            sta[++cnt] = a[i];
+        else {
+            int j = lower_bound(sta + 1, sta + 1 + cnt, a[i]) - sta;
+            sta[j] = a[i];
+        }
+    }
+    return cnt;
+}
+```
+
+### 最长下降子序列 LDS
+
+​	最长不上升的话`sta[cnt] >= a[i]`改成`sta[cnt] > a[i]`
+
+```c++
+int sta[MX], cnt, dp[MX];
+int LDS() {
+    cnt = 1;
+    for(int i = 0; i <= n; i++)
+        sta[i] = 0;
+    for(int i = 0; i < n; i++) {
+        if(sta[cnt] >= a[i])
+            sta[++cnt] = a[i];
+        else {
+            int j = upper_bound(sta + 1, sta + 1 + cnt, a[i], greater<int>()) - sta;
+            sta[j] = a[i];
+        }
+    }
+    return cnt;
+}
+```
+
+### 数量关系 
+
+Dilworth定理：偏序集能划分成的最少的全序集个数等于最大反链的元素个数
+
+​	将一个序列剖成若干个单调不上升子序列的最少个数 = 该序列最长上升子序列的大小
+
+​	将一个序列剖成若干个单调不下降子序列的最少个数 = 该序列最长下降子序列的大小
+
+### 最长公共子序列 LCS
+
+将 b 中的每个元素以 a 中同一元素的出现位置离散化重新编号，对处理后的 b 求 LIS 即为 LCS
+
+### 最长公共上升子序列 LCIS
+
+```c++
+int LCIS() {
+    for(int i = 1; i <= n; i++) {
+        cnt = 0;
+        for(int j = 1; j <= n; j++) {
+            if(a[i] == b[j])
+                sta[j] = cnt + 1;
+            if(a[i] > b[j])
+                cnt = max(cnt, sta[j]);
+        }
+    }
+    cnt = 0;
+    for(int i = 1; i <= n; i++) {
+        cnt = max(sta[i], cnt);
+    }
+    return cnt;
+}
+```
 
 
 
@@ -4331,6 +4452,35 @@ private:
 ```
 
 ## 二分图
+
+### 判断是否是二分图
+
+BFS染色
+
+```c++
+queue<int> q;
+int color[MX] = {0};
+bool check(int u) {
+    q.push(u);
+    color[u] = 1;
+    while(!q.empty()) {
+        u = q.front();
+        q.pop();
+        for(int i = head[u]; i; i = e[i]._next) {
+            int v = e[i].v;
+            if(color[v] == -1) {
+                q.push(v);
+                color[v] = !color[u];
+            }
+            else if(color[v] == color[u])
+                return 0;
+        }
+    }
+    return 1;
+}
+```
+
+
 
 ### 最大匹配
 
