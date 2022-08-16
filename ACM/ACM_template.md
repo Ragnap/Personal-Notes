@@ -749,7 +749,7 @@ void _union(int x, int y) {
 	if (xx == yy)
 		return;
 	if (xx > yy)
-		_swap(xx, yy);
+		swap(xx, yy);
 	_fa[yy] = xx;
 }
 ```
@@ -836,34 +836,64 @@ public:
 
 ## 单调队列
 ```c++
-struct Node {
-	int num;
-	int id;
-}a[MX];
-deque<Node> q;
-void solve() {
-	Node now;
-	for (int i = 1; i <= n; i++) {
-		if (q.empty()) {
-			q.push_back(a[i]);
-		}
-		else {
-			now = q.back();
-			while (now.num > a[i].num) {
-				q.pop_back();
-				if (q.empty())break;
-				now = q.back();
-			}
-			q.push_back(a[i]);
-			now = q.front();
-			if (i - now.id >= k)
-				q.pop_front(); 
-		}
-		if (i >= k)
-			cout << q.front().num << " ";//当前区间最大为队首
-	}
-}
+class MonotoneQueue {
+public:
+    struct Data {
+        int time, val;
+    };
+    int max_len;  // 单调队列最大长度
+    deque<Data> q;
+    void push(int val, int time = 0) {
+        if(q.empty())
+            q.push_back({time, val});
+        else {
+            // 保证单调性
+            while(!q.empty() && q.back().val > val) {
+                q.pop_back();
+            }
+            q.push_back({time, val});
+            // 控制先前元素出栈
+            if(max_len)
+                while(!q.empty() && time - q.front().time >= max_len)
+                    q.pop_front();
+        }
+    }
+    int front() {
+        return q.front().val;
+    }
+    void clear() {
+        q.clear();
+    }
+} q;
 ```
+
+## 单调栈
+
+```c++
+class MonotoneStack {
+public:
+    int sta[10000];
+    int head;
+    void push(int val) {
+        if(head == 0)
+            sta[head++] = val;
+        else {
+            // 保证单调性
+            while(head >= 0 && sta[head] > val)
+                head--;
+            sta[head++] = val;
+        }
+    }
+    int top() {
+        return sta[head];
+    }
+    void clear() {
+        head = 0;
+    }
+} sta;
+```
+
+
 
 ## ST表
 
@@ -1561,11 +1591,11 @@ ll get_inv(ll a) {
 #### $1 \sim n $ 所有数的逆元
 
 ```c++
-int inv[MX] = { 0 };
+ll inv[MX] = {0};
 void get_inv(int range) {
-	inv[1] = 1;
-	for (int i = 2; i <= range; i++)
-		inv[i] = MOD - ((MOD / i) * inv[MOD % i]) % MOD;
+    inv[1] = 1;
+    for(int i = 2; i < range; i++)
+        inv[i] = ((MOD - MOD / i) * inv[MOD % i]) % MOD;
 }
 ```
 
@@ -1646,9 +1676,9 @@ ll _C(int n, int m) {
 
 ### Lucas定理
 
-对较小质数$ p $ 取模，要求 $p \leq 10^6 $
+对较小质数$ p $ 取模，要求 $ p \leq 10^6 $
 $$
-{n \choose m}={n\mod p \choose m\mod p} \cross {n/p \choose m/p}
+{n \choose m}={n\mod p \choose m\mod p} \times {n/p \choose m/p}
 $$
 
 ```c++
@@ -2618,7 +2648,7 @@ double e_dis(Point& a, Point& b) {
 
 #### 曼哈顿距离
 
-$\abs{x_1-x_2}+\abs{y_1-y_2}$
+$|x_1-x_2|+|y_1-y_2|$
 
 ```c++
 int m_dis(Point& a, Point& b) {
@@ -2628,7 +2658,7 @@ int m_dis(Point& a, Point& b) {
 
 #### 切比雪夫距离
 
-$max(\abs{x_1-x_2},\abs{y_1-y_2})$
+$max(|x_1-x_2|,|y_1-y_2|)$
 
 ```c++
 int c_dis(Point& a, Point& b) {
@@ -3327,7 +3357,7 @@ void huge_bag() {
 ​	最长不下降的话`sta[cnt] <= a[i]`改成`sta[cnt] < a[i]`
 
 ```c++
-int sta[MX], cnt, dp[MX];
+int sta[MX], cnt;
 int LIS() {
     cnt = 1;
     for(int i = 0; i <= n; i++)
@@ -3349,7 +3379,7 @@ int LIS() {
 ​	最长不上升的话`sta[cnt] >= a[i]`改成`sta[cnt] > a[i]`
 
 ```c++
-int sta[MX], cnt, dp[MX];
+int sta[MX], cnt;
 int LDS() {
     cnt = 1;
     for(int i = 0; i <= n; i++)
@@ -3370,9 +3400,9 @@ int LDS() {
 
 Dilworth定理：偏序集能划分成的最少的全序集个数等于最大反链的元素个数
 
-​	将一个序列剖成若干个单调不上升子序列的最少个数 = 该序列最长上升子序列的大小
+​	将一个序列划分成若干个单调不上升子序列的最少个数 = 该序列最长上升子序列的大小
 
-​	将一个序列剖成若干个单调不下降子序列的最少个数 = 该序列最长下降子序列的大小
+​	将一个序列划分成若干个单调不下降子序列的最少个数 = 该序列最长下降子序列的大小
 
 ### 最长公共子序列 LCS
 
@@ -3505,10 +3535,8 @@ int spfa_SLF(int u) {
 				dis[v] = dis[u] + e[i].val;
 				//判定负环（不保证出现时用 e.g.差分约束）
 				len[v] = len[u] + 1;
-				if (len[v] > n) {
-					//flag = 1;
+				if (len[v] > n) 
 					return 1;
-				}
 				if (!inq[v]) {
 					inq[v] = 1;
 					if (q.empty() || dis[v] < dis[q.front()])
@@ -3523,7 +3551,7 @@ int spfa_SLF(int u) {
 }
 ```
 
-#### DFS_SPFA
+#### SPFA + DFS
 
 ```c++
 int inq[MX]; ll dis[MX] = { 0 };
@@ -3548,6 +3576,42 @@ int DFS_SPFA(int u, int fa) {
 }
 ```
 
+#### SPFA + 栈
+
+```c++
+stack<int> q;
+int inq[MX], len[MX];
+ll dis[MX] = {0};
+int spfa_sta(int u) {
+    while(!q.empty())
+        q.pop();
+    q.push(u);
+    len[u] = dis[u] = 0;
+    while(!q.empty()) {
+        u = q.top();
+        q.pop();
+        inq[u] = 0;
+        for(int i = head[u]; i; i = e[i]._next) {
+            int v = e[i].v;
+            if(dis[v] < dis[u] + e[i].val) {
+                dis[v] = dis[u] + e[i].val;
+                //判定负环（不保证出现时用 e.g.差分约束）
+                len[v] = len[u] + 1;
+                if(len[v] > n)
+                    return 1;
+                if(!inq[v]) {
+                    inq[v] = 1;
+                    q.push(v);
+                }
+            }
+        }
+    }
+    return 0;
+}
+```
+
+
+
 #### 差分约束
 
 `addedge(u,v,val)` 在使用最短路(找最大上界)时表示 $v-u \leq val$  ，使用最长路(找最小下界)时表示 $v-u \geq val$ 。
@@ -3567,12 +3631,12 @@ int DFS_SPFA(int u, int fa) {
 | **文字表达** |     **加边方式**     |  **文字表达**   |       **加边方式**       |
 | :----------: | :------------------: | :-------------: | :----------------------: |
 |   $ u>v $    |      $(v,u,1)$       |   $ u>v +val$   |      $(v,u,val-1)$       |
-| $ u\geq v $  |      $(v,u,0)$       | $ u\geq v +val$ |       $(u,v,val)$        |
+| $ u\geq v $  |      $(v,u,0)$       | $ u\geq v +val$ |       $(v,u,val)$        |
 |  $ u = v $   | $(u,v,0)$，$(v,u,0)$ |     $u=val$     | $(0,u,val)$，$(u,0,val)$ |
 |   $ u<v $    |      $(u,v,1)$       |   $ u<v +val$   |      $(u,v,-val+1)$      |
 | $ u\leq v $  |      $(u,v,0)$       | $ u\leq v +val$ |       $(u,v,-val)$       |
 
-剩下的就是SPFA+SLF判定负环是否存在解并计算上下界
+剩下的就是SPFA+SLF判定负环是否存在解并计算上下界。这里判定负环的依据是**松弛次数**，需要注意的是，若可能存在重边，则需要**根据入队次数进行判负环**。
 
 ### Floyd
 
@@ -3740,10 +3804,10 @@ void tarjan(int u) {
 		int v = e[i].v;
 		if (!dfn[v]) {
 			tarjan(v);
-			low[u] = _min(low[u], low[v]);
+			low[u] = min(low[u], low[v]);
 		}
 		else if (ins[v])
-			low[u] = _min(low[u], dfn[v]);
+			low[u] = min(low[u], dfn[v]);
 	}
 	if (low[u] == dfn[u]) {
 		col_cnt++;
@@ -3775,17 +3839,19 @@ void tarjan(int u, int fa, int root) {
 		int v = e[i].v;
 		if (!dfn[v]) {
 			tarjan(v, u, root);
-			low[u] = _min(low[u], low[v]);
-			if (low[v] >= dfn[u]) {//割点的判定
+			low[u] = min(low[u], low[v]);
+             //割点的判定
+			if (low[v] >= dfn[u]) {
 				now_size++;
 				if (u != root || now_size > 1)
 					is_cut[u] = 1;
 			}
-			if (low[v] > dfn[u])//桥的判定
+             //桥的判定
+			if (low[v] > dfn[u])
 				bridge[i] = bridge[i ^ 1] = 1;
 		}
 		else if (v != fa)
-			low[u] = _min(low[u], dfn[v]);
+			low[u] = min(low[u], dfn[v]);
 	}
 }
 ```
@@ -4065,7 +4131,7 @@ void solve() {
 
 ```c++
 int siz[MX], fa[MX], son[MX], dep[MX], top[MX];
-int dfn[MX], [MX], trcnt = 0;//以DFS序作为线段树节点,real[i]表示线段树节点i的实际编号
+int dfn[MX], real[MX], trcnt = 0;//以DFS序作为线段树节点,real[i]表示线段树节点i的实际编号
 void DFS1(int u) {
     siz[u] = 1;
     son[u] = 0;
