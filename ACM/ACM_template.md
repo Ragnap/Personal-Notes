@@ -1511,9 +1511,11 @@ void PrimeDevide(ll num) {
 
 再说Pollard-Rho算法
 
-### 欧拉函数
+### 质数个数
 
-求小于等于 $n$ 的正整数中与 $n$ 互质的数的数量
+#### 欧拉函数
+
+求$[1,n]$的正整数中与 $n$ 互质的数的数量
 
 ```c++
 ll phi(ll x) {
@@ -1528,6 +1530,42 @@ ll phi(ll x) {
     if(x != 1)
         ans -= ans / x;
     return ans;
+}
+```
+
+#### 任意区间
+
+求$[1,n]$的正整数中与 $x$ 互质的数的数量(容斥)
+
+```c++
+int count(int n, int m) {
+    vector<int> p;
+    for(int i = 2; i * i <= m; i++) {
+        if(m % i == 0) {
+            p.push_back(i);
+            while(m % i == 0)
+                m /= i;
+        }
+    }
+    if(m > 1)
+        p.push_back(m);
+    int size = p.size();
+    ll sum = 0;
+    for(int i = 1; i < (1 << size); i++) {
+        int cnt = 0;
+        ll mul = 1;
+        for(int j = 0; j < size; j++) {
+            if(i & (1 << j)) {
+                cnt++;
+                mul *= p[j];
+            }
+        }
+        if(cnt & 1)
+            sum += n / mul;
+        else
+            sum -= n / mul;
+    }
+    return n - sum;
 }
 ```
 
@@ -1563,6 +1601,8 @@ ll exgcd(ll a, ll b, ll& x, ll& y) {
 	}
 }
 ```
+
+
 
 ## 逆元
 
@@ -4301,7 +4341,7 @@ private:
         int v;
         int _next;
     } e[MX << 1];
-    int head[MX], cnt = 0;
+    int head[MX], cnt;
     void addedge(int u, int v, ll cap) {
         e[++cnt].v = v;
         e[cnt].cap = cap;
@@ -4338,7 +4378,7 @@ private:
             nowe[u] = i;
             int v = e[i].v;
             if(dep[v] == dep[u] + 1 && e[i].cap) {
-                ll nflow = DFS(v, _min(last, e[i].cap));
+                ll nflow = DFS(v, min(last, e[i].cap));
                 if(nflow > 0) {
                     e[i].cap -= nflow, e[i ^ 1].cap += nflow;
                     last -= nflow;
