@@ -83,7 +83,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 设置使用�
 
 ```c++
 GLFWwindow* window = glfwCreateWindow(1080, 720, "hello world", NULL, NULL); // 创建一个1080*720的名为hello world的窗口
-	glfwMakeContextCurrent(window); // 设置为当前线程的上下文
+glfwMakeContextCurrent(window); // 设置为当前线程的上下文
 ```
 
 
@@ -144,4 +144,5 @@ int main() {
 	return 0;
 ```
 
+# 
 
