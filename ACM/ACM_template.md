@@ -4691,3 +4691,120 @@ int max_match() {
 ### 一般图最大匹配
 
 ### 一般图最大权匹配
+
+
+
+
+
+# 杂项
+
+## 莫队
+
+### 普通莫队
+
+时间复杂度：$O(n\sqrt{n})$
+
+```c++
+struct Node {
+    int l, r, id, block;
+} ask[MX];
+
+void Init() {
+    n = _r();
+    m = _r();
+    int bsize = sqrt(n / 3 * 2);
+    for(int i = 1; i <= n; i++)
+        num[i] = _r();
+    for(int i = 0; i < m; i++) {
+        ask[i].l = _r();
+        ask[i].r = _r();
+        ask[i].id = i;
+        ask[i].block = ask[i].l / bsize + 1;
+    }
+}
+bool cmp(Node a, Node b) {
+    if(a.block == b.block) {
+        if(a.block & 1)
+            return a.r < b.r;
+        else
+            return a.r > b.r;
+    }
+    return a.block < b.block;
+}
+void del(int val){
+	cnt[val]--;
+	if(!cnt[val])
+		kind_cnt--;
+}
+void add(int val){
+	if(!cnt[val])
+		kind_cnt++;
+	cnt[val]++;
+}
+void modui() {
+    sort(ask, ask + m, cmp);
+    int nl = 1, nr = 0, l, r;
+	for(int i = 0; i < m; i++) {
+        l = ask[i].l, r = ask[i].r;
+        while(nl > l)
+            add(num[--nl]);
+        while(nl < l)
+            del(num[nl++]);
+        while(nr < r)
+            add(num[++nr]);
+        while(nr > r)
+            del(num[nr--]);
+        ans[ask[i].id] = mode_cnt;
+    }
+    while(nl <= nr)
+        del(nl++);
+    for(int i = 0; i < m; i++)
+        printf("%d\n", ans[i]);
+}
+```
+
+
+
+### 应用
+
+#### 区间种类数
+
+常见做法，维护区域内每个数字出现的次数，根据移动区间时某个数出现的次数是否有 $0 \rarr 1 $ 或者 $1 \rarr 0 $ 的变化来更新种类数
+
+```c++
+int cnt[MX] = 0;
+int kind_cnt = 0;
+void del(int val){
+	cnt[val]--;
+	if(!cnt[val])
+		kind_cnt--;
+}
+void add(int val){
+	if(!cnt[val])
+		kind_cnt++;
+	cnt[val]++;
+}
+```
+
+#### 区间众数
+
+也就是求区间内每个数的出现次数的种类数，维护两个数组：每个数的出现次数`num_cnt[]` 和 某个数出现次数的出现次数`cnt_cnt[]`,众数的出现次数为`mode_cnt`
+
+```c++
+int num_cnt[MX], cnt_cnt[MX];
+int mode_cnt = 0;
+void del(int val) {
+    cnt_cnt[num_cnt[val]--]--;
+    cnt_cnt[num_cnt[val]]++;
+    if(cnt_cnt[mode_cnt] == 0)
+        mode_cnt--;
+}
+void add(int val) {
+    cnt_cnt[num_cnt[val]++]--;
+    cnt_cnt[num_cnt[val]]++;
+    mode_cnt = max(mode_cnt, num_cnt[val]);
+}
+```
+
+
+
